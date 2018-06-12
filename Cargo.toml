@@ -1,0 +1,21 @@
+[package]
+name = "statusbar-rs"
+version = "0.1.0"
+authors = ["foldu <foldu@protonmail.com>"]
+
+[dependencies]
+failure = "0.1.1"
+rayon = "1.0.1"
+structopt = "0.2.10"
+toml = "0.4.6"
+serde = "1.0.66"
+serde_derive = "1.0.66"
+actix = "0.5.8"
+notify-rust = "3.4.2"
+nom = "4.0.0"
+lazy_static = "1.0.1"
+directories = "0.10.0"
+env_logger = "0.5.10"
+log = "0.4.2"
+inotify = "0.5.1"
+libc = "0.2.42"
