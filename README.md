@@ -12,5 +12,7 @@ It's a textual statusbar.
 Currently none
 
 ## Install
+```
 git clone https://git.mett.navy/foldu/statusbar-rs.git
 cargo install --path statusbar-rs
+```
