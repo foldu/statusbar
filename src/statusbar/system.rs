@@ -3,7 +3,6 @@ use std::time::Duration;
 
 use super::statusbar::Statusbar;
 use config::Config;
-use widget::Widget;
 
 struct Bar {
     bar: Statusbar,
@@ -36,7 +35,7 @@ impl Handler<NewConfig> for Bar {
     type Result = ();
     fn handle(&mut self, NewConfig(cfg): NewConfig, mut ctx: &mut Context<Self>) {
         ctx.cancel_future(self.last_future_tick);
-        //self.cfg = cfg;
+        self.bar = Statusbar::new(cfg).unwrap();
         info!("Updated config");
         self.schedule_tick(&mut ctx);
     }
@@ -57,7 +56,6 @@ impl Actor for ConfigWatcher {
     fn started(&mut self, _ctx: &mut Self::Context) {
         use config;
         use inotify::{self, Inotify, WatchMask};
-        use std::io;
         use std::thread;
 
         let mut inotify = Inotify::init().unwrap();
@@ -71,6 +69,7 @@ impl Actor for ConfigWatcher {
 
         let _ = watch_config(&mut inotify);
 
+        // Ignore this unused, bug in nll
         let mut buf = [0u8; 4096];
 
         let mut on_event = move || -> Result<(), config::Error> {
@@ -79,7 +78,7 @@ impl Actor for ConfigWatcher {
                 if event.mask.contains(inotify::EventMask::DELETE_SELF) {
                     if watch_config(&mut inotify).is_err() {
                         while watch_config(&mut inotify).is_err() {
-                            thread::sleep(::std::time::Duration::new(10, 0));
+                            thread::sleep(Duration::new(10, 0));
                         }
                     }
                 }

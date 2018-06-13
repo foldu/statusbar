@@ -19,3 +19,4 @@ env_logger = "0.5.10"
 log = "0.4.2"
 inotify = "0.5.1"
 libc = "0.2.42"
+chrono = {version = "0.4.3", features = ["serde"]}

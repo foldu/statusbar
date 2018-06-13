@@ -1,6 +1,6 @@
 use config::{Config, GeneralCfg, OutputCfg, OutputFormat};
 use output::{AwesomeOutput, Output};
-use widget::{battery::BatteryWidget, Widget, WidgetKind};
+use widget::{battery::BatteryWidget, datetime::DateTimeWidget, Widget, WidgetKind};
 
 use std::cell::RefCell;
 
@@ -16,14 +16,18 @@ impl Statusbar {
             general,
             formats: OutputCfg { awesome },
             battery,
+            datetime,
         }: Config,
     ) -> Result<Self, failure::Error> {
-        let mut ret = Self {
+        let ret = Self {
             widgets: general
                 .order
                 .iter()
-                .map(|k| match k {
+                .map(move |k| match k {
                     WidgetKind::Battery => Ok(Box::new(BatteryWidget::new(battery)) as Box<Widget>),
+                    WidgetKind::DateTime => {
+                        Ok(Box::new(DateTimeWidget::new(datetime.clone())) as Box<Widget>)
+                    }
                     _ => unimplemented!(),
                 })
                 .collect::<Result<Vec<_>, failure::Error>>()?,
@@ -44,9 +48,14 @@ impl Statusbar {
     pub fn render(&mut self) {
         let mut out = self.output.borrow_mut();
         out.start();
-        self.widgets.iter_mut().for_each(|x| {
-            x.run(&mut **out);
-        });
+        for (i, widget) in self.widgets.iter_mut().enumerate() {
+            if i != 0 {
+                out.write_sep();
+            }
+            if let Err(e) = widget.run(&mut **out) {
+                warn!("{}", e);
+            }
+        }
         out.finish();
     }
 

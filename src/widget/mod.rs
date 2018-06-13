@@ -1,7 +1,7 @@
-use failure;
-use output::Output;
 pub mod battery;
-use config::Config;
+pub mod datetime;
+
+use output::Output;
 
 #[derive(Serialize, Deserialize, Debug, Clone, Copy)]
 pub enum WidgetKind {

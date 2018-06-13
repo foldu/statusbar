@@ -17,8 +17,8 @@ extern crate structopt;
 extern crate env_logger;
 #[macro_use]
 extern crate log;
+extern crate chrono;
 extern crate inotify;
-extern crate libc;
 
 mod config;
 mod output;

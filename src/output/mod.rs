@@ -1,6 +1,5 @@
 mod awesome;
 pub use self::awesome::{AwesomeCfg, AwesomeOutput};
-use notify_rust::Notification;
 
 use std::fmt;
 

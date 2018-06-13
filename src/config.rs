@@ -4,7 +4,7 @@ use std::path::{Path, PathBuf};
 
 use output::AwesomeCfg;
 use widget;
-use widget::battery;
+use widget::{battery, datetime};
 
 use directories::BaseDirs;
 
@@ -29,6 +29,7 @@ impl From<io::Error> for Error {
 }
 
 #[derive(Serialize, Deserialize, Debug, Clone, Copy)]
+#[serde(rename_all = "snake_case")]
 pub enum OutputFormat {
     Awesome,
     I3,
@@ -54,13 +55,14 @@ pub struct Config {
     pub general: GeneralCfg,
     pub formats: OutputCfg,
     pub battery: battery::Cfg,
+    pub datetime: datetime::Cfg,
 }
 
 impl Default for Config {
     fn default() -> Self {
         Self {
             general: GeneralCfg {
-                order: vec![widget::WidgetKind::Battery],
+                order: vec![widget::WidgetKind::DateTime, widget::WidgetKind::Battery],
                 color: true,
                 update_interval: 1000,
                 output: OutputFormat::Awesome,
@@ -69,6 +71,10 @@ impl Default for Config {
                 awesome: AwesomeCfg::default(),
             },
             battery: battery::Cfg { test: 3 },
+            datetime: datetime::Cfg {
+                format: "%Y-%m-%d %H:%M:%S".into(),
+                timezone: datetime::TimeZone::Local,
+            },
         }
     }
 }
