@@ -28,7 +28,7 @@ impl From<io::Error> for Error {
     }
 }
 
-#[derive(Serialize, Deserialize, Debug, Clone)]
+#[derive(Serialize, Deserialize, Debug, Clone, Copy)]
 pub enum OutputFormat {
     Awesome,
     I3,
@@ -47,12 +47,12 @@ pub struct GeneralCfg {
     pub color: bool,
     pub update_interval: u32,
     pub output: OutputFormat,
-    pub formats: OutputCfg,
 }
 
 #[derive(Serialize, Deserialize, Debug, Clone)]
 pub struct Config {
     pub general: GeneralCfg,
+    pub formats: OutputCfg,
     pub battery: battery::Cfg,
 }
 
@@ -64,9 +64,9 @@ impl Default for Config {
                 color: true,
                 update_interval: 1000,
                 output: OutputFormat::Awesome,
-                formats: OutputCfg {
-                    awesome: AwesomeCfg::default(),
-                },
+            },
+            formats: OutputCfg {
+                awesome: AwesomeCfg::default(),
             },
             battery: battery::Cfg { test: 3 },
         }

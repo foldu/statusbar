@@ -2,22 +2,14 @@ mod awesome;
 pub use self::awesome::{AwesomeCfg, AwesomeOutput};
 use notify_rust::Notification;
 
-// FIXME: interface sucks
+use std::fmt;
+
 pub trait Output {
-    fn warn(&mut self, e: &failure::Error) {
-        if let Err(e) = Notification::new()
-            .summary("statusbar-rs")
-            .body(&e.to_string())
-            .show()
-        {
-            eprintln!("Error erroring: {}", e);
-        }
-    }
     fn init(&mut self) {}
     fn start(&mut self) {}
-    fn write(&mut self, &str);
+    fn write(&mut self, fmt::Arguments);
     fn write_sep(&mut self) {}
-    fn write_colored(&mut self, Color, &str);
+    fn write_colored(&mut self, Color, fmt::Arguments);
     fn finish(&mut self) {}
 }
 

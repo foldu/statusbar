@@ -11,5 +11,5 @@ pub enum WidgetKind {
 }
 
 pub trait Widget {
-    fn run(&mut self, sink: &Output) -> Result<(), failure::Error>;
+    fn run(&mut self, sink: &mut Output) -> Result<(), failure::Error>;
 }

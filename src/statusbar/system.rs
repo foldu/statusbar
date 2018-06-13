@@ -1,12 +1,12 @@
 use actix::prelude::*;
 use std::time::Duration;
 
+use super::statusbar::Statusbar;
 use config::Config;
 use widget::Widget;
 
 struct Bar {
-    _widgets: Vec<Box<Widget>>,
-    cfg: Config,
+    bar: Statusbar,
     last_future_tick: SpawnHandle,
 }
 
@@ -16,19 +16,19 @@ impl Actor for Bar {
 
 impl Bar {
     fn schedule_tick(&mut self, ctx: &mut Context<Self>) {
-        self.last_future_tick = ctx.notify_later(Tick, tick_duration(&self.cfg));
+        self.last_future_tick = ctx.notify_later(Tick, tick_duration(self.bar.update_interval()));
     }
 }
 
-fn tick_duration(cfg: &Config) -> Duration {
-    Duration::from_millis(cfg.general.update_interval as u64)
+fn tick_duration(interval: u32) -> Duration {
+    Duration::from_millis(interval as u64)
 }
 
 impl Handler<Tick> for Bar {
     type Result = ();
     fn handle(&mut self, _msg: Tick, mut ctx: &mut Context<Self>) {
         self.schedule_tick(&mut ctx);
-        println!("I ARE BATMAN");
+        self.bar.render();
     }
 }
 
@@ -36,7 +36,7 @@ impl Handler<NewConfig> for Bar {
     type Result = ();
     fn handle(&mut self, NewConfig(cfg): NewConfig, mut ctx: &mut Context<Self>) {
         ctx.cancel_future(self.last_future_tick);
-        self.cfg = cfg;
+        //self.cfg = cfg;
         info!("Updated config");
         self.schedule_tick(&mut ctx);
     }
@@ -72,7 +72,6 @@ impl Actor for ConfigWatcher {
         let _ = watch_config(&mut inotify);
 
         let mut buf = [0u8; 4096];
-        println!("AAAAAAAAAAAAAAAAAAAAAA");
 
         let mut on_event = move || -> Result<(), config::Error> {
             let events = inotify.read_events_blocking(&mut buf)?;
@@ -88,7 +87,6 @@ impl Actor for ConfigWatcher {
 
             let cfg = Config::load()?;
 
-            eprintln!("AAAAA");
             self.tx.do_send(NewConfig(cfg));
 
             Ok(())
@@ -105,10 +103,11 @@ impl Actor for ConfigWatcher {
 pub fn run(cfg: Config) {
     let sys = System::new("bar");
     let bar: Addr<Syn, _> = Bar::create(|ctx: &mut Context<Bar>| {
-        let last = ctx.notify_later(Tick, tick_duration(&cfg));
+        let last = ctx.notify_later(Tick, tick_duration(cfg.general.update_interval));
+        // FIXME:
+        let bar = Statusbar::new(cfg).unwrap();
         Bar {
-            _widgets: vec![],
-            cfg,
+            bar: bar,
             last_future_tick: last,
         }
     });
