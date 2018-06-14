@@ -1,6 +1,6 @@
 use std::fs;
 use std::io;
-use std::path::{Path, PathBuf};
+use std::path::PathBuf;
 
 use output::AwesomeCfg;
 use widget;
@@ -85,32 +85,41 @@ lazy_static! {
 }
 
 impl Config {
+    #[inline]
     pub fn load() -> Result<Self, Error> {
         toml::from_str(&fs::read_to_string(&*CONFIG_PATH)?).map(Ok)?
     }
 
-    fn write_default_to<P>(path: P) -> Result<Self, Error>
-    where
-        P: AsRef<Path>,
-    {
-        let ret = Self::default();
-        fs::write(path, toml::to_string_pretty(&ret).unwrap())?;
-        Ok(ret)
+    #[inline]
+    fn default_config_toml() -> (Config, String) {
+        let def = Self::default();
+        let toml = toml::to_string_pretty(&def);
+        (def, toml.unwrap())
     }
 
     pub fn write_default() -> Result<Self, Error> {
-        Self::write_default_to(&*CONFIG_PATH)
+        let (ret, toml) = Self::default_config_toml();
+        fs::write(&*CONFIG_PATH, toml)?;
+        Ok(ret)
+    }
+
+    pub fn load_or_write_default() -> Result<Self, Error> {
+        match Self::load() {
+            Ok(cfg) => Ok(cfg),
+            Err(Error::Io(io_e)) => {
+                use std::io::ErrorKind;
+                if let ErrorKind::NotFound = io_e.kind() {
+                    Self::write_default()
+                } else {
+                    Err(Error::Io(io_e))
+                }
+            }
+            e => e,
+        }
     }
 }
 
-#[cfg(unix)]
 #[test]
-fn default_config_write_works() {
-    match Config::write_default_to("/tmp/test.toml") {
-        Ok(_) => (),
-        Err(e) => {
-            eprintln!("{}", e);
-            assert!(false);
-        }
-    }
+fn default_config_works() {
+    Config::default_config_toml();
 }
