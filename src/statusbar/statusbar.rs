@@ -1,43 +1,33 @@
-use config::{Config, GeneralCfg, OutputCfg, OutputFormat};
-use output::{AwesomeOutput, Output};
-use widget::{battery::BatteryWidget, datetime::DateTimeWidget, Widget, WidgetKind};
-
 use std::cell::RefCell;
 
+use config::{Config, GeneralCfg, OutputFormat};
+use output::{AwesomeOutput, Output};
+use widget::{widget_from_kind, Widget};
+
 pub struct Statusbar {
-    widgets: Vec<Box<Widget>>,
+    widgets: Vec<Box<dyn Widget>>,
     general_cfg: GeneralCfg,
-    output: RefCell<Box<Output>>,
+    output: RefCell<Box<dyn Output>>,
 }
 
 impl Statusbar {
-    pub fn new(
-        Config {
-            general,
-            formats: OutputCfg { awesome },
-            battery,
-            datetime,
-        }: Config,
-    ) -> Result<Self, failure::Error> {
+    pub fn new(cfg: Config) -> Result<Self, failure::Error> {
         let ret = Self {
-            widgets: general
+            widgets: cfg
+                .general
                 .order
                 .iter()
-                .map(move |k| match k {
-                    WidgetKind::Battery => Ok(Box::new(BatteryWidget::new(battery)) as Box<Widget>),
-                    WidgetKind::DateTime => {
-                        Ok(Box::new(DateTimeWidget::new(datetime.clone())) as Box<Widget>)
-                    }
-                    _ => unimplemented!(),
-                })
+                .map(|&kind| widget_from_kind(&cfg, kind))
                 .collect::<Result<Vec<_>, failure::Error>>()?,
 
-            output: match general.output {
-                OutputFormat::Awesome => RefCell::new(Box::new(AwesomeOutput::new(awesome))),
+            output: match cfg.general.output {
+                OutputFormat::Awesome => {
+                    RefCell::new(Box::new(AwesomeOutput::new(cfg.formats.awesome)))
+                }
                 _ => unimplemented!(),
             },
 
-            general_cfg: general,
+            general_cfg: cfg.general,
         };
 
         ret.output.borrow_mut().init();
