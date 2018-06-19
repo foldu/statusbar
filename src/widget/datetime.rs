@@ -14,7 +14,7 @@ impl DateTimeWidget {
 }
 
 impl Widget for DateTimeWidget {
-    fn run(&mut self, sink: &mut Output) -> Result<(), failure::Error> {
+    fn run(&mut self, sink: &mut dyn Output) -> Result<(), failure::Error> {
         let fmt = match self.cfg.timezone {
             TimeZone::Local => Local::now().format(&self.cfg.format),
             TimeZone::UTC => Utc::now().format(&self.cfg.format),

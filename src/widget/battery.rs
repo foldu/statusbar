@@ -12,7 +12,7 @@ impl BatteryWidget {
 }
 
 impl Widget for BatteryWidget {
-    fn run(&mut self, sink: &mut Output) -> Result<(), failure::Error> {
+    fn run(&mut self, sink: &mut dyn Output) -> Result<(), failure::Error> {
         sink.write(format_args!("test"));
         Ok(())
     }

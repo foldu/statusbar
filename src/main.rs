@@ -25,6 +25,7 @@ mod output;
 mod parse;
 mod statusbar;
 mod widget;
+
 use config::Config;
 
 use structopt::StructOpt;
@@ -43,18 +44,7 @@ fn run() -> Result<(), failure::Error> {
     let cfg = if opt.write_default {
         Config::write_default()?
     } else {
-        match Config::load() {
-            Ok(cfg) => cfg,
-            Err(config::Error::Io(io_e)) => {
-                use std::io::ErrorKind;
-                if let ErrorKind::NotFound = io_e.kind() {
-                    Config::write_default()?
-                } else {
-                    Err(config::Error::Io(io_e))?
-                }
-            }
-            e => e?,
-        }
+        Config::load_or_write_default()?
     };
 
     statusbar::run(cfg);
