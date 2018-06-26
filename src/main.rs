@@ -11,7 +11,6 @@ extern crate notify_rust;
 #[macro_use]
 extern crate lazy_static;
 extern crate directories;
-extern crate toml;
 #[macro_use]
 extern crate structopt;
 extern crate env_logger;
@@ -19,6 +18,7 @@ extern crate env_logger;
 extern crate log;
 extern crate chrono;
 extern crate inotify;
+extern crate serde_yaml;
 
 mod config;
 mod output;
@@ -47,7 +47,7 @@ fn run() -> Result<(), failure::Error> {
         Config::load_or_write_default()?
     };
 
-    statusbar::run(cfg);
+    //statusbar::run(cfg);
 
     Ok(())
 }

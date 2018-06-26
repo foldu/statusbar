@@ -3,21 +3,21 @@ use chrono::{Local, Utc};
 use output::Output;
 use widget::Widget;
 
-pub struct DateTimeWidget {
+pub struct DatetimeWidget {
     cfg: Cfg,
 }
 
-impl DateTimeWidget {
+impl DatetimeWidget {
     pub fn new(cfg: Cfg) -> Self {
         Self { cfg }
     }
 }
 
-impl Widget for DateTimeWidget {
+impl Widget for DatetimeWidget {
     fn run(&mut self, sink: &mut dyn Output) -> Result<(), failure::Error> {
         let fmt = match self.cfg.timezone {
-            TimeZone::Local => Local::now().format(&self.cfg.format),
-            TimeZone::UTC => Utc::now().format(&self.cfg.format),
+            Timezone::Local => Local::now().format(&self.cfg.format),
+            Timezone::UTC => Utc::now().format(&self.cfg.format),
         };
 
         sink.write(format_args!("{}", fmt));
@@ -28,13 +28,23 @@ impl Widget for DateTimeWidget {
 
 #[derive(Debug, Serialize, Deserialize, Clone, Copy)]
 #[serde(rename_all = "snake_case")]
-pub enum TimeZone {
+pub enum Timezone {
     Local,
     UTC,
 }
 
 #[derive(Debug, Serialize, Deserialize, Clone)]
+#[serde(rename_all = "snake_case")]
 pub struct Cfg {
-    pub timezone: TimeZone,
+    pub timezone: Timezone,
     pub format: String,
+}
+
+impl Default for Cfg {
+    fn default() -> Self {
+        Self {
+            format: "%Y-%m-%d %H:%M:%S".into(),
+            timezone: Timezone::Local,
+        }
+    }
 }

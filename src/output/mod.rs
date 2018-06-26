@@ -19,6 +19,18 @@ pub enum Color {
     Bad,
 }
 
+#[derive(Serialize, Deserialize, Debug, Clone)]
+#[serde(rename_all = "snake_case")]
+pub enum OutputKind {
+    Awesome(AwesomeCfg),
+}
+
+impl Default for OutputKind {
+    fn default() -> Self {
+        OutputKind::Awesome(AwesomeCfg::default())
+    }
+}
+
 #[derive(Debug, Clone, Serialize, Deserialize)]
 struct GColors<C> {
     good: C,
