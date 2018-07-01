@@ -25,6 +25,15 @@ pub enum OutputKind {
     Awesome(AwesomeCfg),
 }
 
+impl OutputKind {
+    pub fn to_output(self) -> Box<dyn Output> {
+        use self::OutputKind::*;
+        match self {
+            Awesome(cfg) => Box::new(AwesomeOutput::new(cfg)),
+        }
+    }
+}
+
 impl Default for OutputKind {
     fn default() -> Self {
         OutputKind::Awesome(AwesomeCfg::default())

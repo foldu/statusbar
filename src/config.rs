@@ -13,12 +13,20 @@ pub enum Error {
     #[fail(display = "Can't load config: {}", _0)]
     Io(#[cause] io::Error),
     #[fail(display = "Can't load config: {}", _0)]
-    Yaml(#[cause] serde_yaml::Error),
+    RonSer(#[cause] ron::ser::Error),
+    #[fail(display = "Can't load config: {}", _0)]
+    RonDe(#[cause] ron::de::Error),
 }
 
-impl From<serde_yaml::Error> for Error {
-    fn from(e: serde_yaml::Error) -> Self {
-        Error::Yaml(e)
+impl From<ron::ser::Error> for Error {
+    fn from(e: ron::ser::Error) -> Self {
+        Error::RonSer(e)
+    }
+}
+
+impl From<ron::de::Error> for Error {
+    fn from(e: ron::de::Error) -> Self {
+        Error::RonDe(e)
     }
 }
 
@@ -55,19 +63,21 @@ impl Default for Config {
 }
 
 lazy_static! {
-    pub static ref CONFIG_PATH: PathBuf =
-        { BaseDirs::new().config_dir().join("statusbar-rs.yaml") };
+    pub static ref CONFIG_PATH: PathBuf = { BaseDirs::new().config_dir().join("statusbar-rs.ron") };
 }
 
 impl Config {
     #[inline]
     pub fn load() -> Result<Self, Error> {
-        serde_yaml::from_str(&fs::read_to_string(&*CONFIG_PATH)?).map(Ok)?
+        ron::de::from_str(&fs::read_to_string(&*CONFIG_PATH)?).map(Ok)?
     }
 
     pub fn write_default() -> Result<Self, Error> {
         let ret = Self::default();
-        fs::write(&*CONFIG_PATH, &serde_yaml::to_string(&ret).unwrap())?;
+        fs::write(
+            &*CONFIG_PATH,
+            &ron::ser::to_string_pretty(&ret, ron::ser::PrettyConfig::default()).unwrap(),
+        )?;
         Ok(ret)
     }
 
@@ -90,5 +100,5 @@ impl Config {
 #[test]
 fn default_config_works() {
     let def = Config::default();
-    assert!(serde_yaml::to_string(&def).is_ok());
+    assert!(ron::ser::to_string(&def).is_ok());
 }

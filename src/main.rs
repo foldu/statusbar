@@ -18,7 +18,7 @@ extern crate env_logger;
 extern crate log;
 extern crate chrono;
 extern crate inotify;
-extern crate serde_yaml;
+extern crate ron;
 
 mod config;
 mod output;

@@ -20,5 +20,4 @@ log = "0.4.2"
 inotify = "0.5.1"
 libc = "0.2.42"
 chrono = {version = "0.4.3", features = ["serde"]}
-serde_yaml = "0.7.5"
 ron = "0.3.0"
