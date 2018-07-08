@@ -63,7 +63,12 @@ impl Default for Config {
 }
 
 lazy_static! {
-    pub static ref CONFIG_PATH: PathBuf = { BaseDirs::new().config_dir().join("statusbar-rs.ron") };
+    pub static ref CONFIG_PATH: PathBuf = {
+        BaseDirs::new()
+            .unwrap()
+            .config_dir()
+            .join("statusbar-rs.ron")
+    };
 }
 
 impl Config {
