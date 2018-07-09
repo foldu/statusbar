@@ -3,8 +3,7 @@ use std::io;
 use std::path::PathBuf;
 
 use output::OutputKind;
-use widget;
-use widget::{battery, datetime, WidgetKind};
+use widget::{battery, datetime, mpd, WidgetKind};
 
 use directories::BaseDirs;
 
@@ -57,7 +56,11 @@ impl Default for Config {
                 update_interval: 1000,
             },
             format: OutputKind::default(),
-            widgets: vec![WidgetKind::Datetime(datetime::Cfg::default())],
+            widgets: vec![
+                WidgetKind::Datetime(datetime::Cfg::default()),
+                WidgetKind::Battery(battery::Cfg::default()),
+                WidgetKind::Mpd(mpd::Cfg::default()),
+            ],
         }
     }
 }

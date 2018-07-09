@@ -1,4 +1,4 @@
-#![feature(nll, extern_prelude)]
+#![feature(nll, extern_prelude, pin)]
 extern crate serde;
 #[macro_use]
 extern crate serde_derive;
@@ -16,14 +16,17 @@ extern crate structopt;
 extern crate env_logger;
 #[macro_use]
 extern crate log;
+extern crate alsa;
 extern crate chrono;
 extern crate inotify;
 extern crate ron;
 
 mod config;
+mod formatter;
 mod output;
 mod parse;
 mod statusbar;
+mod util;
 mod widget;
 
 use config::Config;

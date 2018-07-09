@@ -1,19 +1,19 @@
 use chrono::{Local, Utc};
 
 use output::Output;
-use widget::Widget;
+use widget;
 
-pub struct DatetimeWidget {
+pub struct Widget {
     cfg: Cfg,
 }
 
-impl DatetimeWidget {
+impl Widget {
     pub fn new(cfg: Cfg) -> Self {
         Self { cfg }
     }
 }
 
-impl Widget for DatetimeWidget {
+impl widget::Widget for Widget {
     fn run(&mut self, sink: &mut dyn Output) -> Result<(), failure::Error> {
         let fmt = match self.cfg.timezone {
             Timezone::Local => Local::now().format(&self.cfg.format),
