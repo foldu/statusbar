@@ -2,6 +2,8 @@ use std::collections::HashMap;
 use std::fmt;
 use std::fmt::Write;
 
+use failure::Fail;
+
 #[derive(Debug, Clone)]
 pub enum Op {
     PutString(String),

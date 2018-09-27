@@ -2,10 +2,10 @@ use alsa::{
     mixer::{Selem, SelemId},
     Mixer,
 };
-use output::Output;
-use std::boxed::PinBox;
-use std::marker::Pinned;
-use widget;
+use failure::format_err;
+
+use crate::output::Output;
+use crate::widget;
 
 struct AlsaConn {
     mixer: Mixer,
@@ -54,7 +54,7 @@ impl Widget {
 }
 
 impl widget::Widget for Widget {
-    fn run(&mut self, sink: &mut dyn Output) -> Result<(), failure::Error> {
+    fn run(&mut self, _sink: &mut dyn Output) -> Result<(), failure::Error> {
         Ok(())
     }
 }

@@ -1,9 +1,13 @@
-use std::io::{self, prelude::*, BufReader};
-use std::net::{TcpStream, ToSocketAddrs};
-use std::str;
-use std::time::Duration;
+use std::{
+    io::{self, prelude::*, BufReader},
+    net::{TcpStream, ToSocketAddrs},
+    str,
+    time::Duration,
+};
 
-use util::{str_copy, OptionalString};
+use failure::Fail;
+
+use crate::util::{str_copy, OptionalString};
 
 pub struct MpdConnection {
     sock: BufReader<TcpStream>,
@@ -14,7 +18,7 @@ pub struct MpdConnection {
 pub enum Error {
     #[fail(display = "Server is not mpd")]
     NotMpd,
-    #[fail(display = "{}", _0)]
+    #[fail(display = "Error while communicating with mpd")]
     Io(#[cause] io::Error),
     #[fail(display = "Got unparseable mpd output: {}", _0)]
     InvalidMpdOutput(String),

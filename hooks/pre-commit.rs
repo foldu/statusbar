@@ -7,9 +7,10 @@ extern crate termion;
 
 use std::ffi::OsStr;
 use std::io::{self, prelude::*};
+use std::iter;
 use std::process::{exit, Command, Output};
 use std::str;
-use std::sync::mpsc::{channel, Receiver, Sender};
+use std::sync::mpsc::{channel, Receiver, RecvTimeoutError, Sender};
 use std::thread;
 
 use termion::color;
@@ -33,16 +34,12 @@ impl Spinner {
     fn spawn() -> Self {
         let (tx, rx) = channel();
         let hndl = thread::spawn(move || {
-            let mut i = 0;
-            loop {
-                print!("{}", SPIN_ARR[i] as char);
+            for spin_ch in SPIN_ARR.iter().cycle() {
+                print!("{}", spin_ch as char);
                 flush_stdout();
-                if rx.try_recv().is_ok() {
+                if rx.recv_timeout(Duration::from_millis(150)).is_ok() {
                     break;
                 }
-                thread::sleep_ms(150);
-                i += 1;
-                i %= SPIN_ARR.len();
                 print!("{}", 8 as char);
             }
         });

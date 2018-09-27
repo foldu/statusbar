@@ -3,12 +3,14 @@ pub use self::awesome::{AwesomeCfg, AwesomeOutput};
 
 use std::fmt;
 
+use serde_derive::{Deserialize, Serialize};
+
 pub trait Output {
     fn init(&mut self) {}
     fn start(&mut self) {}
-    fn write(&mut self, fmt::Arguments);
+    fn write(&mut self, _: fmt::Arguments);
     fn write_sep(&mut self) {}
-    fn write_colored(&mut self, Color, fmt::Arguments);
+    fn write_colored(&mut self, _: Color, _: fmt::Arguments);
     fn finish(&mut self) {}
 }
 

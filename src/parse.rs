@@ -1,4 +1,6 @@
+use failure::format_err;
 use nom::types::CompleteStr;
+use nom::*;
 
 fn is_hex_digit_c(c: char) -> bool {
     nom::is_hex_digit(c as u8)

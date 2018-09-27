@@ -1,9 +1,10 @@
 mod conn;
 
-use output::Output;
-use widget;
+use serde_derive::{Deserialize, Serialize};
 
 use self::conn::{MpdConnection, MpdStatus};
+use crate::output::Output;
+use crate::widget;
 
 pub struct Widget {
     cfg: Cfg,
@@ -38,9 +39,9 @@ pub struct Cfg {
 impl Default for Cfg {
     fn default() -> Self {
         Self {
-            format_running: "mpd: %artist - %title".into(),
+            format_running: "mpd: {artist} - {title}".into(),
             format_stopped: "mpd: stopped".into(),
-            format_paused: "mpd: paused %artist - %title".into(),
+            format_paused: "mpd: paused {artist} - {title}".into(),
             format_down: "mpd: ded".into(),
             endpoint: "localhost:6600".into(),
         }
@@ -48,7 +49,7 @@ impl Default for Cfg {
 }
 
 impl widget::Widget for Widget {
-    fn run(&mut self, sink: &mut dyn Output) -> Result<(), failure::Error> {
+    fn run(&mut self, _sink: &mut dyn Output) -> Result<(), failure::Error> {
         Ok(())
     }
 }

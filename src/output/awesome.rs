@@ -1,7 +1,9 @@
-use output::{Color, GColors, Output};
-use parse;
-
 use std::fmt::{self, Write};
+
+use serde_derive::{Deserialize, Serialize};
+
+use crate::output::{Color, GColors, Output};
+use crate::parse;
 
 #[derive(Debug, Clone)]
 pub struct AwesomeOutput {
@@ -98,7 +100,8 @@ impl Output for AwesomeOutput {
             self.buf,
             "<span color=\"{}\">{}</span>",
             self.cfg.separator_color.0, self.cfg.separator
-        ).unwrap()
+        )
+        .unwrap()
     }
 
     fn finish(&mut self) {

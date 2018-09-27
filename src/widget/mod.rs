@@ -3,10 +3,12 @@ pub mod datetime;
 pub mod mpd;
 pub mod volume;
 
-use output::Output;
+use serde_derive::{Deserialize, Serialize};
+
+use crate::output::Output;
 
 pub trait Widget {
-    fn run(&mut self, &mut dyn Output) -> Result<(), failure::Error>;
+    fn run(&mut self, _: &mut dyn Output) -> Result<(), failure::Error>;
 }
 
 #[derive(Serialize, Deserialize, Debug, Clone)]

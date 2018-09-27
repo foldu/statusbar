@@ -1,7 +1,8 @@
 use chrono::{Local, Utc};
+use serde_derive::{Deserialize, Serialize};
 
-use output::Output;
-use widget;
+use crate::output::Output;
+use crate::widget;
 
 pub struct Widget {
     cfg: Cfg,

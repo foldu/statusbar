@@ -1,19 +1,20 @@
-use std::fs;
-use std::io;
-use std::path::PathBuf;
-
-use output::OutputKind;
-use widget::{battery, datetime, mpd, WidgetKind};
+use std::{fs, io, path::PathBuf};
 
 use directories::BaseDirs;
+use failure::Fail;
+use lazy_static::*;
+use serde_derive::{Deserialize, Serialize};
+
+use crate::output::OutputKind;
+use crate::widget::{battery, datetime, mpd, WidgetKind};
 
 #[derive(Fail, Debug)]
 pub enum Error {
-    #[fail(display = "Can't load config: {}", _0)]
+    #[fail(display = "Can't open config")]
     Io(#[cause] io::Error),
-    #[fail(display = "Can't load config: {}", _0)]
+    #[fail(display = "Can't serialize default config")]
     RonSer(#[cause] ron::ser::Error),
-    #[fail(display = "Can't load config: {}", _0)]
+    #[fail(display = "Can't deserialize config")]
     RonDe(#[cause] ron::de::Error),
 }
 

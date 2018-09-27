@@ -1,11 +1,14 @@
-use std::fs::File;
-use std::io::{self, BufReader};
-use std::path::PathBuf;
-
-use output::Output;
-use widget;
+use std::{
+    fs::File,
+    io::{self, BufReader},
+    path::PathBuf,
+};
 
 use failure;
+use serde_derive::{Deserialize, Serialize};
+
+use crate::output::Output;
+use crate::widget;
 
 pub struct Widget {
     cfg: Cfg,
@@ -59,8 +62,7 @@ where
     let mut full = None;
     let mut now = None;
     let mut ln = String::new();
-    loop {
-        r.read_line(&mut ln).ok()?;
+    while r.read_line(&mut ln).ok()? != 0 {
         if ln.ends_with('\n') {
             ln.pop();
         }
@@ -88,7 +90,7 @@ where
 impl widget::Widget for Widget {
     fn run(&mut self, sink: &mut dyn Output) -> Result<(), failure::Error> {
         if let Ok(fh) = File::open(&self.cfg.bat_name).map(BufReader::new) {
-            let uevent_bat = parse_uevent(fh).unwrap();
+            let _uevent_bat = parse_uevent(fh).unwrap();
         } else {
             sink.write(format_args!("{}", self.cfg.format_no_bat));
         }
