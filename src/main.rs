@@ -27,8 +27,6 @@ fn run() -> Result<(), failure::Error> {
         Config::load_or_write_default()?
     };
 
-    //statusbar::run(cfg);
-
     Ok(())
 }
 
