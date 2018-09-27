@@ -19,13 +19,11 @@ pub enum WidgetKind {
     Mpd(mpd::Cfg),
 }
 
-impl WidgetKind {
-    pub fn to_widget(self) -> Box<dyn Widget> {
-        use self::WidgetKind::*;
-        match self {
-            Battery(cfg) => Box::new(battery::Widget::new(cfg)),
-            Datetime(cfg) => Box::new(datetime::Widget::new(cfg)),
-            Mpd(cfg) => Box::new(mpd::Widget::new(cfg)),
-        }
+pub fn widget_from_kind(kind: WidgetKind) -> Box<dyn Widget> {
+    use self::WidgetKind::*;
+    match kind {
+        Battery(cfg) => Box::new(battery::Widget::new(cfg)),
+        Datetime(cfg) => Box::new(datetime::Widget::new(cfg)),
+        Mpd(cfg) => Box::new(mpd::Widget::new(cfg)),
     }
 }

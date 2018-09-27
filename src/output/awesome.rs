@@ -2,13 +2,13 @@ use std::fmt::{self, Write};
 
 use serde_derive::{Deserialize, Serialize};
 
-use crate::output::{Color, GColors, Output};
+use crate::output::{Color, GColors};
 use crate::parse;
 
 #[derive(Debug, Clone)]
-pub struct AwesomeOutput {
+pub struct Output {
     buf: String,
-    cfg: AwesomeCfg,
+    cfg: Cfg,
 }
 
 #[derive(Debug, Clone)]
@@ -48,13 +48,13 @@ impl serde::ser::Serialize for HexRgb {
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
-pub struct AwesomeCfg {
+pub struct Cfg {
     separator: String,
     separator_color: HexRgb,
     colors: GColors<HexRgb>,
 }
 
-impl Default for AwesomeCfg {
+impl Default for Cfg {
     fn default() -> Self {
         Self {
             colors: GColors {
@@ -68,8 +68,8 @@ impl Default for AwesomeCfg {
     }
 }
 
-impl AwesomeOutput {
-    pub fn new(cfg: AwesomeCfg) -> Self {
+impl Output {
+    pub fn new(cfg: Cfg) -> Self {
         Self {
             buf: String::new(),
             cfg,
@@ -77,7 +77,7 @@ impl AwesomeOutput {
     }
 }
 
-impl Output for AwesomeOutput {
+impl super::Output for Output {
     fn start(&mut self) {
         self.buf.clear();
     }
