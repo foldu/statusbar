@@ -9,7 +9,8 @@ It's a textual statusbar.
 - Readable code
 
 ## Depends
-Currently none
+- The thing that gets linked with -lasound, probably libalsa or alsalib
+- dbus? No idea where that comes from
 
 ## Install
 ```
