@@ -82,27 +82,5 @@ pub fn update_ifs(
                 },
             );
         }
-        //eprintln!("{:#?}", addr);
-        //if let Some(SockAddr::Inet(inet_addr)) = addr.address {
-        //    if let IpAddr::V4(ip4) = inet_addr.ip() {
-        //        if let Some(info) = cache.get_mut(&addr.interface_name) {
-        //            info.is_running = addr.flags.contains(InterfaceFlags::IFF_RUNNING);
-        //            info.ip_addr = ip4;
-        //        } else {
-        //            cache.insert(
-        //                addr.interface_name.clone(),
-        //                IfInfo {
-        //                    ip_addr: ip4,
-        //                    is_running: addr.flags.contains(InterfaceFlags::IFF_RUNNING),
-        //                    type_: if is_wireless_if(sock, &addr.interface_name) {
-        //                        IfType::Wireless
-        //                    } else {
-        //                        IfType::Ethernet
-        //                    },
-        //                },
-        //            );
-        //        }
-        //    }
-        //}
     }
 }
