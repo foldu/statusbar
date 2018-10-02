@@ -2,8 +2,10 @@ use std::fmt::{self, Write};
 
 use serde_derive::{Deserialize, Serialize};
 
-use crate::output::{Color, GColors};
-use crate::parse;
+use crate::{
+    output::{Color, GColors},
+    parse,
+};
 
 #[derive(Debug, Clone)]
 pub struct Output {

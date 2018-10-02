@@ -42,6 +42,7 @@ impl Handler<NewConfig> for Bar {
         ctx.cancel_future(self.last_future_tick);
         self.bar = Statusbar::new(cfg).unwrap();
         info!("Updated config");
+        self.bar.update();
         self.schedule_tick(&mut ctx);
     }
 }
@@ -109,14 +110,14 @@ pub fn run(cfg: Config) {
     let bar = Bar::create(|ctx: &mut Context<Bar>| {
         let last = ctx.notify_later(Update, tick_duration(cfg.general.update_interval));
         // FIXME:
-        let bar = Statusbar::new(cfg).unwrap();
+        let mut bar = Statusbar::new(cfg).unwrap();
+        bar.update();
         Bar {
-            bar: bar,
+            bar,
             last_future_tick: last,
         }
     });
 
     SyncArbiter::start(1, move || ConfigWatcher { tx: bar.clone() });
-
     sys.run();
 }

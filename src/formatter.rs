@@ -1,11 +1,17 @@
-use std::collections::HashMap;
-use std::fmt;
-use std::fmt::Write;
+use std::{
+    collections::HashMap,
+    fmt::{self, Display, Write},
+    str::FromStr,
+};
 
 use failure::Fail;
+use serde::{
+    de::{self, Deserialize, Deserializer, Visitor},
+    ser::{Serialize, Serializer},
+};
 
 #[derive(Debug, Clone)]
-pub enum Op {
+enum Op {
     PutString(String),
     PutMap(String),
     PutMapTrunc(String, usize),
@@ -36,6 +42,8 @@ pub enum ParseError {
     TruncOverflow(usize),
     #[fail(display = "Invalid ident: {}", _0)]
     InvalidIdent(usize, String),
+    #[fail(display = "Unexpected eof")]
+    UnexpectedEof(usize),
 }
 
 impl ParseError {
@@ -51,9 +59,12 @@ impl From<fmt::Error> for Error {
 }
 
 impl FormatMap {
+    #[inline]
     pub fn new() -> Self {
         Self { 0: HashMap::new() }
     }
+
+    #[inline]
     fn get(&self, k: &str) -> Option<&MapCont> {
         self.0.get(k)
     }
@@ -69,13 +80,33 @@ impl FormatMap {
             self.0.insert(k.to_owned(), cont);
         }
     }
+
+    pub fn update_string_with<F>(&mut self, k: &str, f: F)
+    where
+        F: FnOnce(&mut String),
+    {
+        if let Some(MapCont::Str(old_str)) = self.0.get_mut(k) {
+            f(old_str);
+        } else {
+            let mut s = String::new();
+            f(&mut s);
+            self.insert(k, s);
+        }
+    }
 }
 
 #[derive(Debug, Clone)]
 pub enum MapCont {
+    Signed(i64),
     Unsigned(u64),
     Str(String),
     Float(f64),
+}
+
+impl From<i64> for MapCont {
+    fn from(n: i64) -> Self {
+        MapCont::Signed(n)
+    }
 }
 
 impl From<u64> for MapCont {
@@ -96,25 +127,31 @@ impl From<String> for MapCont {
     }
 }
 
+impl<'a> From<&'a Display> for MapCont {
+    fn from(d: &Display) -> Self {
+        MapCont::Str(d.to_string())
+    }
+}
+
 #[derive(Debug, Clone)]
 pub struct Format(Vec<Op>);
 
 impl Format {
-    pub fn fmt_no_lookup(&self, ret: &mut String) -> Result<(), Error> {
+    pub fn fmt_no_lookup(&self, ret: &mut String) {
         for op in self.0.iter() {
             match op {
-                Op::PutString(ref s) => write!(ret, "{}", s)?,
-                Op::PutMap(ref s) => write!(ret, "{{{}}}", s)?,
-                Op::PutMapTrunc(ref s, n) => write!(ret, "{{{}:{}}}", s, n)?,
+                Op::PutString(ref s) => write!(ret, "{}", s).unwrap(),
+                Op::PutMap(ref s) => write!(ret, "{{{}}}", s).unwrap(),
+                Op::PutMapTrunc(ref s, n) => write!(ret, "{{{}:{}}}", s, n).unwrap(),
             }
         }
-        Ok(())
     }
 
     pub fn fmt(&self, ret: &mut String, fmt_map: &FormatMap) -> Result<(), Error> {
         let put_from_fmt_map = |ret: &mut String, k: &str| {
             if let Some(ref cont) = fmt_map.get(k) {
                 match cont {
+                    MapCont::Signed(n) => write!(ret, "{}", n)?,
                     MapCont::Unsigned(n) => write!(ret, "{}", n)?,
                     MapCont::Float(n) => write!(ret, "{}", n)?,
                     MapCont::Str(s) => ret.push_str(s),
@@ -196,7 +233,7 @@ impl Format {
                         } else {
                             State::ReadTrunc
                         }
-                    } else if c.is_alphabetic() {
+                    } else if c.is_alphabetic() || c.is_numeric() {
                         str_buf.push(c);
                         State::InCurly
                     } else {
@@ -231,6 +268,73 @@ impl Format {
             }
         }
 
+        match state {
+            State::Normal => ret.push(Op::PutString(str_buf)),
+            State::ReadTrunc | State::InCurly | State::GotCurlyOpen => {
+                return Err(ParseError::UnexpectedEof(s.len()));
+            }
+        }
+
         Ok(Self { 0: ret })
+    }
+}
+
+impl FromStr for Format {
+    type Err = ParseError;
+    fn from_str(s: &str) -> Result<Self, Self::Err> {
+        Self::parse(s)
+    }
+}
+
+impl std::fmt::Display for Format {
+    fn fmt(&self, fmt: &mut std::fmt::Formatter) -> std::fmt::Result {
+        for op in self.0.iter() {
+            match op {
+                Op::PutString(ref s) => write!(fmt, "{}", s)?,
+                Op::PutMap(ref key) => write!(fmt, "{{{}}}", key)?,
+                Op::PutMapTrunc(ref key, nchars) => write!(fmt, "{{{}:{}}}", key, nchars)?,
+            }
+        }
+        Ok(())
+    }
+}
+
+impl<'de> Deserialize<'de> for Format {
+    fn deserialize<D: Deserializer<'de>>(deserializer: D) -> Result<Self, D::Error> {
+        struct FormatVisitor;
+
+        impl<'de> Visitor<'de> for FormatVisitor {
+            type Value = Format;
+
+            fn expecting(&self, formatter: &mut fmt::Formatter) -> fmt::Result {
+                formatter.write_str("a format string")
+            }
+
+            fn visit_str<E: de::Error>(self, value: &str) -> Result<Self::Value, E> {
+                Format::parse(value)
+                    .map_err(|e| E::custom(&format!("Can't parse as format string: {}", e)))
+            }
+        }
+
+        deserializer.deserialize_str(FormatVisitor)
+    }
+}
+
+impl Serialize for Format {
+    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
+    where
+        S: Serializer,
+    {
+        serializer.serialize_str(&self.to_string())
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn formatter_test() {
+        // TODO:
     }
 }

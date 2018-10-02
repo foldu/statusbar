@@ -7,7 +7,7 @@ use serde_derive::{Deserialize, Serialize};
 
 use crate::{
     output::{default_output, OutputKind},
-    widget::{battery, datetime, mpd, WidgetKind},
+    widget::{battery, datetime, mpd, net, volume, WidgetKind},
 };
 
 #[derive(Serialize, Deserialize, Debug, Clone, Copy)]
@@ -81,9 +81,11 @@ impl Config {
             },
             format: default_output(def),
             widgets: vec![
-                WidgetKind::Datetime(datetime::Cfg::default()),
-                WidgetKind::Battery(battery::Cfg::default()),
                 WidgetKind::Mpd(mpd::Cfg::default()),
+                WidgetKind::Net(net::Cfg::default()),
+                WidgetKind::Battery(battery::Cfg::default()),
+                WidgetKind::Volume(volume::Cfg::default()),
+                WidgetKind::Datetime(datetime::Cfg::default()),
             ],
         }
     }

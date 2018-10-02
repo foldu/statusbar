@@ -1,3 +1,5 @@
+#![feature(try_from)]
+
 mod config;
 mod formatter;
 mod output;
