@@ -9,7 +9,7 @@ fn if_test() {
     let mut test = HashMap::new();
     let sock = InetStreamSock::new().unwrap();
     let blacklist = InterfaceBlacklist::new();
-    update_ifs(&mut test, &blacklist, sock);
+    update_ifs(&mut test, &blacklist, &sock);
 
     // I don't think cargo works offline so the compiling system needs to have working net
     // interface

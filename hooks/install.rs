@@ -1,9 +1,10 @@
 #!/usr/bin/env run-cargo-script
-use std::fs;
-use std::io;
-use std::os::unix::fs::{symlink, MetadataExt};
-use std::path::{Path, PathBuf};
-use std::process::{exit, Command};
+use std::{
+    fs, io,
+    os::unix::fs::{symlink, MetadataExt},
+    path::{Path, PathBuf},
+    process::{exit, Command},
+};
 
 fn is_same_file<P, Q>(a: P, b: Q) -> io::Result<bool>
 where
@@ -25,8 +26,8 @@ fn main() {
             .expect("Git not installed")
             .stdout,
     ).unwrap()
-        .trim()
-        .to_owned();
+    .trim()
+    .to_owned();
 
     if !is_same_file(root, ".").unwrap() {
         eprintln!("Not in git root");
@@ -40,7 +41,8 @@ fn main() {
         .filter(|path| !path.ends_with("install.rs"))
         .for_each(|path| {
             let target = PathBuf::from(".git/hooks").join(path.file_stem().unwrap());
-            if let Err(e) = symlink(&path, &target) {
+            let relative_path = Path::new("../../").join(&path);
+            if let Err(e) = symlink(&relative_path, &target) {
                 match e.kind() {
                     io::ErrorKind::AlreadyExists => {}
                     _ => {
