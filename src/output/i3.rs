@@ -5,31 +5,9 @@ use serde_derive::{Deserialize, Serialize};
 use super::HexRgb;
 use crate::output::{Color, GColors};
 
-#[derive(Debug, Clone)]
 pub struct Output {
     buf: String,
     cfg: Cfg,
-}
-
-#[derive(Debug, Clone, Serialize, Deserialize)]
-pub struct Cfg {
-    separator: String,
-    separator_color: HexRgb,
-    colors: GColors<HexRgb>,
-}
-
-impl Default for Cfg {
-    fn default() -> Self {
-        Self {
-            colors: GColors {
-                good: "#00FF00".parse().unwrap(),
-                bad: "#FF0000".parse().unwrap(),
-                mediocre: "#FFFF00".parse().unwrap(),
-            },
-            separator: " | ".into(),
-            separator_color: "#333333".parse().unwrap(),
-        }
-    }
 }
 
 impl Output {
@@ -41,13 +19,36 @@ impl Output {
     }
 }
 
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct Cfg {
+    colors: GColors<HexRgb>,
+}
+
+impl Default for Cfg {
+    fn default() -> Self {
+        Self {
+            colors: GColors {
+                good: "#00FF00".parse().unwrap(),
+                bad: "#FF0000".parse().unwrap(),
+                mediocre: "#FFFF00".parse().unwrap(),
+            },
+        }
+    }
+}
+
 impl super::Output for Output {
+    fn init(&mut self) {
+        println!(r#"{{"version":1}}"#);
+        println!("[");
+    }
+
     fn start(&mut self) {
         self.buf.clear();
+        print!("[");
     }
 
     fn write(&mut self, s: fmt::Arguments) {
-        write!(self.buf, "{}", s).unwrap()
+        write!(self.buf, r#"{{"full_text": "{}"}},"#, s).unwrap()
     }
 
     fn write_colored(&mut self, c: Color, s: fmt::Arguments) {
@@ -56,19 +57,20 @@ impl super::Output for Output {
             Color::Mediocre => &self.cfg.colors.mediocre.0,
             Color::Bad => &self.cfg.colors.bad.0,
         };
-        write!(self.buf, "<span color=\"{}\">{}</span>", color, s).unwrap()
-    }
-
-    fn write_sep(&mut self) {
         write!(
             self.buf,
-            "<span color=\"{}\">{}</span>",
-            self.cfg.separator_color.0, self.cfg.separator
+            r#"{{"full_text": "{}","color": "{}"}},"#,
+            s, color
         )
         .unwrap()
     }
 
+    fn write_sep(&mut self) {}
+
     fn finish(&mut self) {
-        println!("{}", self.buf);
+        if self.buf.ends_with(",") {
+            self.buf.pop();
+        }
+        println!("{}],", self.buf);
     }
 }

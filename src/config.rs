@@ -15,6 +15,7 @@ use crate::{
 pub enum DefaultConfig {
     Awesome,
     Terminal,
+    I3,
 }
 
 #[derive(Fail, Debug)]
