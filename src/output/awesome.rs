@@ -14,7 +14,6 @@ pub struct Output {
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct Cfg {
     separator: String,
-    separator_color: HexRgb,
     colors: GColors<HexRgb>,
 }
 
@@ -24,7 +23,6 @@ impl Output {
             buf: String::new(),
             cfg: Cfg {
                 separator: sep.to_owned(),
-                separator_color: colors.hex_separator.clone(),
                 colors: colors.hex.clone(),
             },
         }
@@ -53,7 +51,7 @@ impl super::Output for Output {
         write!(
             self.buf,
             "<span color=\"{}\">{}</span>",
-            self.cfg.separator_color.as_ref(),
+            self.cfg.colors.separator.as_ref(),
             self.cfg.separator
         )
         .unwrap()

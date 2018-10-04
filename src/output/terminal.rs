@@ -12,7 +12,6 @@ pub struct Output {
 #[derive(Debug, Clone)]
 pub struct Cfg {
     separator: String,
-    separator_color: console::Color,
     colors: TerminalColors,
 }
 
@@ -23,7 +22,6 @@ impl Output {
             cfg: Cfg {
                 colors: colors.terminal.clone(),
                 separator: sep.to_owned(),
-                separator_color: colors.terminal_separator,
             },
         }
     }
@@ -52,7 +50,7 @@ impl super::Output for Output {
             self.buf,
             "{}",
             console::Style::new()
-                .fg(self.cfg.separator_color)
+                .fg(self.cfg.colors.separator)
                 .apply_to(&self.cfg.separator)
         )
         .unwrap();

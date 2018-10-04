@@ -7,6 +7,7 @@ pub struct GColors<C> {
     pub good: C,
     pub mediocre: C,
     pub bad: C,
+    pub separator: C,
 }
 
 #[derive(Debug, Clone)]
@@ -74,13 +75,12 @@ pub struct TerminalColors {
     pub mediocre: console::Color,
     #[serde(with = "ColorDef")]
     pub bad: console::Color,
+    #[serde(with = "ColorDef")]
+    pub separator: console::Color,
 }
 
 #[derive(Serialize, Deserialize, Debug, Clone)]
 pub struct ColorCfg {
-    pub hex_separator: HexRgb,
-    #[serde(with = "ColorDef")]
-    pub terminal_separator: console::Color,
     pub hex: GColors<HexRgb>,
     pub terminal: TerminalColors,
 }
@@ -92,17 +92,15 @@ impl Default for ColorCfg {
                 good: "#00FF00".parse().unwrap(),
                 bad: "#FF0000".parse().unwrap(),
                 mediocre: "#FFFF00".parse().unwrap(),
+                separator: "#333333".parse().unwrap(),
             },
-
-            hex_separator: "#333333".parse().unwrap(),
 
             terminal: TerminalColors {
                 good: console::Color::Green,
                 bad: console::Color::Red,
                 mediocre: console::Color::Yellow,
+                separator: console::Color::Black,
             },
-
-            terminal_separator: console::Color::Black,
         }
     }
 }
