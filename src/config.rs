@@ -41,6 +41,7 @@ impl From<io::Error> for Error {
 pub struct GeneralCfg {
     pub color: bool,
     pub update_interval: u32,
+    pub enable_desktop_notifications: bool,
 }
 
 #[derive(Serialize, Deserialize, Debug, Clone)]
@@ -70,6 +71,7 @@ impl Config {
             general: GeneralCfg {
                 color: true,
                 update_interval: 1000,
+                enable_desktop_notifications: true,
             },
             format: default_output(def),
             widgets: vec![

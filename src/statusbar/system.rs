@@ -1,15 +1,27 @@
-use std::time::Duration;
+use std::{fmt::Write, time::Duration};
 
 use actix::prelude::{
     Actor, Addr, AsyncContext, Context, Handler, Message, SpawnHandle, SyncArbiter, SyncContext,
     System,
 };
 use log::*;
+use notify_rust::Notification;
 
 use super::statusbar::Statusbar;
 use crate::config::Config;
 
-struct Bar {
+fn format_error(err: &failure::Error) -> String {
+    let mut ret = format!("{}\n", err);
+    for cause in err.iter_causes() {
+        write!(ret, "{}\n", cause).unwrap();
+    }
+    if ret.ends_with("\n") {
+        ret.pop();
+    }
+    ret
+}
+
+pub struct Bar {
     bar: Statusbar,
     last_future_tick: SpawnHandle,
 }
@@ -40,10 +52,32 @@ impl Handler<NewConfig> for Bar {
     type Result = ();
     fn handle(&mut self, NewConfig(cfg): NewConfig, mut ctx: &mut Context<Self>) {
         ctx.cancel_future(self.last_future_tick);
-        self.bar = Statusbar::new(cfg).unwrap();
+        self.bar = Statusbar::new(cfg, ctx.address()).unwrap();
         info!("Updated config");
         self.bar.update();
         self.schedule_tick(&mut ctx);
+    }
+}
+
+impl Handler<ErrorLog> for Bar {
+    type Result = ();
+
+    fn handle(&mut self, ErrorLog(msg): ErrorLog, _ctx: &mut Context<Self>) {
+        error!("{}", msg);
+        for cause in msg.iter_causes() {
+            error!("Caused by: {}", cause)
+        }
+
+        if self.bar.desktop_notifications_enabled() {
+            if let Err(e) = Notification::new()
+                .summary("statusbar-rs error")
+                // FIXME:
+                .body(&format_error(&msg))
+                .show()
+            {
+                warn!("{}", e);
+            }
+        }
     }
 }
 
@@ -52,6 +86,9 @@ struct Update;
 
 #[derive(Message)]
 struct NewConfig(Config);
+
+#[derive(Message)]
+pub struct ErrorLog(pub failure::Error);
 
 struct ConfigWatcher {
     tx: Addr<Bar>,
@@ -78,7 +115,8 @@ impl Actor for ConfigWatcher {
         // Ignore this unused, bug in nll
         let mut buf = [0u8; 4096];
 
-        let mut on_event = move || -> Result<(), config::Error> {
+        let tx = self.tx.clone();
+        let mut on_event = move || -> Result<(), failure::Error> {
             let events = inotify.read_events_blocking(&mut buf)?;
             for event in events {
                 if event.mask.contains(inotify::EventMask::DELETE_SELF) {
@@ -92,14 +130,14 @@ impl Actor for ConfigWatcher {
 
             let cfg = Config::load()?;
 
-            self.tx.do_send(NewConfig(cfg));
+            tx.do_send(NewConfig(cfg));
 
             Ok(())
         };
 
         loop {
             if let Err(e) = on_event() {
-                warn!("{}", e);
+                self.tx.do_send(ErrorLog(e));
             }
         }
     }
@@ -110,7 +148,7 @@ pub fn run(cfg: Config) {
     let bar = Bar::create(|ctx: &mut Context<Bar>| {
         let last = ctx.notify_later(Update, tick_duration(cfg.general.update_interval));
         // FIXME:
-        let mut bar = Statusbar::new(cfg).unwrap();
+        let mut bar = Statusbar::new(cfg, ctx.address()).unwrap();
         bar.update();
         Bar {
             bar,
