@@ -8,6 +8,7 @@ mod linux;
 #[allow(non_snake_case)]
 #[allow(non_upper_case_globals)]
 #[allow(non_camel_case_types)]
+#[allow(clippy::all)]
 mod linux_wireless;
 mod unix;
 
@@ -72,7 +73,7 @@ impl widget::Widget for Widget {
             Interface::Device { .. } => &self.default_blacklist,
         };
 
-        unix::update_ifs(&mut self.cache, &blacklist, &self.sock);
+        unix::update_ifs(&mut self.cache, &blacklist, self.sock);
 
         // FIXME: dude what
         let (color, is_up) = if let Some((if_, if_info)) = match self.cfg.interface {
@@ -133,7 +134,7 @@ enum IfType {
 }
 
 impl IfType {
-    fn is_wireless(&self) -> bool {
+    fn is_wireless(self) -> bool {
         if let IfType::Wireless = self {
             true
         } else {

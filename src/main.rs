@@ -1,4 +1,4 @@
-#![feature(try_from)]
+#![feature(try_from, tool_lints)]
 
 mod config;
 mod formatter;

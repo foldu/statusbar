@@ -13,9 +13,9 @@ use crate::config::{Config, Format};
 fn format_error(err: &failure::Error) -> String {
     let mut ret = format!("{}\n", err);
     for cause in err.iter_causes() {
-        write!(ret, "{}\n", cause).unwrap();
+        writeln!(ret, "{}", cause).unwrap();
     }
-    if ret.ends_with("\n") {
+    if ret.ends_with('\n') {
         ret.pop();
     }
     ret
@@ -38,7 +38,7 @@ impl Bar {
 }
 
 fn tick_duration(interval: u32) -> Duration {
-    Duration::from_millis(interval as u64)
+    Duration::from_millis(u64::from(interval))
 }
 
 impl Handler<Update> for Bar {
@@ -120,11 +120,11 @@ impl Actor for ConfigWatcher {
         let mut on_event = move || -> Result<(), failure::Error> {
             let events = inotify.read_events_blocking(&mut buf)?;
             for event in events {
-                if event.mask.contains(inotify::EventMask::DELETE_SELF) {
-                    if watch_config(&mut inotify).is_err() {
-                        while watch_config(&mut inotify).is_err() {
-                            thread::sleep(Duration::new(10, 0));
-                        }
+                if event.mask.contains(inotify::EventMask::DELETE_SELF)
+                    && watch_config(&mut inotify).is_err()
+                {
+                    while watch_config(&mut inotify).is_err() {
+                        thread::sleep(Duration::new(10, 0));
                     }
                 }
             }

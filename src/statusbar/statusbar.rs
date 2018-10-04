@@ -27,10 +27,7 @@ impl Statusbar {
         format: Format,
     ) -> Self {
         let ret = Self {
-            widgets: widgets
-                .into_iter()
-                .map(|kind| widget_from_kind(kind))
-                .collect(),
+            widgets: widgets.into_iter().map(widget_from_kind).collect(),
             output: RefCell::new(output_from_format(&general.separator, colors, format)),
             general_cfg: general,
             controller,

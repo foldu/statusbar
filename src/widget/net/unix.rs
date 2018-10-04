@@ -26,7 +26,7 @@ impl InetStreamSock {
     }
 
     #[inline]
-    pub fn fd(&self) -> RawFd {
+    pub fn fd(self) -> RawFd {
         self.0
     }
 }
@@ -34,7 +34,7 @@ impl InetStreamSock {
 pub fn update_ifs(
     cache: &mut HashMap<String, IfInfo>,
     blacklist: &InterfaceBlacklist,
-    sock: &InetStreamSock,
+    sock: InetStreamSock,
 ) {
     let addrs = getifaddrs().unwrap();
 

@@ -56,7 +56,7 @@ impl super::Output for Output {
     fn write_sep(&mut self) {}
 
     fn finish(&mut self) {
-        if self.buf.ends_with(",") {
+        if self.buf.ends_with(',') {
             self.buf.pop();
         }
         println!("{}],", self.buf);
