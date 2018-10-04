@@ -7,7 +7,7 @@ use actix::prelude::{
 use log::*;
 use notify_rust::Notification;
 
-use super::statusbar::Statusbar;
+use super::status::Statusbar;
 use crate::config::{Config, Format};
 
 fn format_error(err: &failure::Error) -> String {
