@@ -46,6 +46,9 @@ fn main() {
     env_logger::init();
     if let Err(e) = run() {
         eprintln!("{}", e);
+        for cause in e.iter_causes() {
+            eprintln!("Caused by: {}", cause);
+        }
         std::process::exit(1);
     }
 }

@@ -69,7 +69,7 @@ impl widget::Widget for Widget {
     fn run(&mut self, sink: &mut dyn Output) -> Result<(), failure::Error> {
         let blacklist = match self.cfg.interface {
             Interface::Dynamic { ref blacklist } => blacklist,
-            Interface::Device(_) => &self.default_blacklist,
+            Interface::Device { .. } => &self.default_blacklist,
         };
 
         unix::update_ifs(&mut self.cache, &blacklist, &self.sock);
@@ -77,11 +77,11 @@ impl widget::Widget for Widget {
         // FIXME: dude what
         let (color, is_up) = if let Some((if_, if_info)) = match self.cfg.interface {
             Interface::Dynamic { .. } => best_running_if(&self.cache),
-            Interface::Device(ref if_) => Some((
-                if_,
+            Interface::Device { ref name } => Some((
+                name,
                 self.cache
-                    .get(if_)
-                    .ok_or_else(|| format_err!("Network interface {} doesn't exist", if_))?,
+                    .get(name)
+                    .ok_or_else(|| format_err!("Network interface {} doesn't exist", name))?,
             )),
         } {
             self.fmt_map.update_string_with("if", |s| s.clone_from(if_));
@@ -154,26 +154,31 @@ pub struct IfInfo {
 pub struct InterfaceBlacklist(HashSet<String>);
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
+#[serde(tag = "type")]
 pub enum Interface {
     Dynamic {
         #[serde(deserialize_with = "deserialize_blacklist")]
         #[serde(serialize_with = "serialize_blacklist")]
         blacklist: InterfaceBlacklist,
     },
-    Device(String),
+    Device {
+        name: String,
+    },
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct Cfg {
-    interface: Interface,
     format_up: Format,
     format_down: Format,
+    interface: Interface,
 }
 
 impl Default for Cfg {
     fn default() -> Self {
         Self {
-            interface: Interface::Device("enp4s0".to_owned()),
+            interface: Interface::Dynamic {
+                blacklist: InterfaceBlacklist::new(),
+            },
             format_up: Format::parse("{if}: {ipv4}").unwrap(),
             format_down: Format::parse("net: no").unwrap(),
         }

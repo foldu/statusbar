@@ -25,6 +25,7 @@ pub enum Color {
 
 #[derive(Serialize, Deserialize, Debug, Clone)]
 #[serde(rename_all = "snake_case")]
+#[serde(tag = "type")]
 pub enum OutputKind {
     Awesome(awesome::Cfg),
     Terminal(terminal::Cfg),

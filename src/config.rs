@@ -21,21 +21,13 @@ pub enum DefaultConfig {
 pub enum Error {
     #[fail(display = "Can't open config")]
     Io(#[cause] io::Error),
-    #[fail(display = "Can't serialize default config")]
-    RonSer(#[cause] ron::ser::Error),
     #[fail(display = "Can't deserialize config")]
-    RonDe(#[cause] ron::de::Error),
+    Toml(#[cause] toml::de::Error),
 }
 
-impl From<ron::ser::Error> for Error {
-    fn from(e: ron::ser::Error) -> Self {
-        Error::RonSer(e)
-    }
-}
-
-impl From<ron::de::Error> for Error {
-    fn from(e: ron::de::Error) -> Self {
-        Error::RonDe(e)
+impl From<toml::de::Error> for Error {
+    fn from(e: toml::de::Error) -> Self {
+        Error::Toml(e)
     }
 }
 
@@ -63,18 +55,18 @@ lazy_static! {
         BaseDirs::new()
             .unwrap()
             .config_dir()
-            .join("statusbar-rs.ron")
+            .join("statusbar-rs.toml")
     };
 }
 
 impl Config {
     #[inline]
     pub fn load() -> Result<Self, Error> {
-        ron::de::from_str(&fs::read_to_string(&*CONFIG_PATH)?).map(Ok)?
+        toml::from_str(&fs::read_to_string(&*CONFIG_PATH)?).map(Ok)?
     }
 
-    fn with_default_config(def: DefaultConfig) -> Self {
-        Self {
+    fn with_default_config(def: DefaultConfig) -> (String, Self) {
+        let ret = Self {
             general: GeneralCfg {
                 color: true,
                 update_interval: 1000,
@@ -87,14 +79,16 @@ impl Config {
                 WidgetKind::Volume(volume::Cfg::default()),
                 WidgetKind::Datetime(datetime::Cfg::default()),
             ],
-        }
+        };
+        (toml::to_string_pretty(&ret).unwrap(), ret)
     }
 
     pub fn write_default(def: DefaultConfig) -> Result<Self, Error> {
-        let ret = Self::with_default_config(def);
+        let (cont, ret) = Self::with_default_config(def);
         fs::write(
             &*CONFIG_PATH,
-            &ron::ser::to_string_pretty(&ret, ron::ser::PrettyConfig::default()).unwrap(),
+            &cont
+            //&ron::ser::to_string_pretty(&ret, ron::ser::PrettyConfig::default()).unwrap(),
         )?;
         Ok(ret)
     }
@@ -121,9 +115,7 @@ mod tests {
 
     #[test]
     fn default_config_works() {
-        let def = Config::with_default_config(DefaultConfig::Terminal);
-        assert!(ron::ser::to_string(&def).is_ok());
-        let def = Config::with_default_config(DefaultConfig::Awesome);
-        assert!(ron::ser::to_string(&def).is_ok());
+        Config::with_default_config(DefaultConfig::Terminal);
+        Config::with_default_config(DefaultConfig::Awesome);
     }
 }

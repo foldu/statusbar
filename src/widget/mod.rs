@@ -15,6 +15,7 @@ pub trait Widget {
 
 #[derive(Serialize, Deserialize, Debug, Clone)]
 #[serde(rename_all = "snake_case")]
+#[serde(tag = "type")]
 pub enum WidgetKind {
     Battery(battery::Cfg),
     Datetime(datetime::Cfg),
