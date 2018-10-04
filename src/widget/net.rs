@@ -53,6 +53,18 @@ impl Widget {
     }
 }
 
+fn best_running_if<'a>(cache: &'a HashMap<String, IfInfo>) -> Option<(&'a String, &'a IfInfo)> {
+    let running = cache
+        .iter()
+        .filter(|(_, info)| info.is_running)
+        .collect::<Vec<_>>();
+    running
+        .iter()
+        .cloned()
+        .find(|(_, info)| !info.type_.is_wireless())
+        .or_else(|| running.into_iter().next())
+}
+
 impl widget::Widget for Widget {
     fn run(&mut self, sink: &mut dyn Output) -> Result<(), failure::Error> {
         let blacklist = match self.cfg.interface {
@@ -62,42 +74,44 @@ impl widget::Widget for Widget {
 
         unix::update_ifs(&mut self.cache, &blacklist, &self.sock);
 
-        let if_ = match self.cfg.interface {
-            Interface::Dynamic { .. } => unimplemented!(),
-            Interface::Device(ref if_) => if_,
-        };
+        // FIXME: dude what
+        let (color, is_up) = if let Some((if_, if_info)) = match self.cfg.interface {
+            Interface::Dynamic { .. } => best_running_if(&self.cache),
+            Interface::Device(ref if_) => Some((
+                if_,
+                self.cache
+                    .get(if_)
+                    .ok_or_else(|| format_err!("Network interface {} doesn't exist", if_))?,
+            )),
+        } {
+            self.fmt_map.update_string_with("if", |s| s.clone_from(if_));
+            self.fmt_map.update_string_with("ipv4", |s| {
+                s.clear();
+                if let Some(ipv4) = if_info.ipv4 {
+                    write!(s, "{}", ipv4);
+                } else {
+                    write!(s, "None");
+                }
+            });
+            self.fmt_map.update_string_with("ipv6", |s| {
+                s.clear();
+                if let Some(ipv6) = if_info.ipv6 {
+                    write!(s, "{}", ipv6);
+                } else {
+                    write!(s, "None");
+                }
+            });
 
-        let if_info = self
-            .cache
-            .get(if_)
-            .ok_or_else(|| format_err!("Network interface {} doesn't exist", if_))?;
-
-        self.fmt_map.update_string_with("if", |s| s.clone_from(if_));
-        self.fmt_map.update_string_with("ipv4", |s| {
-            s.clear();
-            if let Some(ipv4) = if_info.ipv4 {
-                write!(s, "{}", ipv4);
-            } else {
-                write!(s, "None");
-            }
-        });
-        self.fmt_map.update_string_with("ipv6", |s| {
-            s.clear();
-            if let Some(ipv6) = if_info.ipv6 {
-                write!(s, "{}", ipv6);
-            } else {
-                write!(s, "None");
-            }
-        });
-
-        let (color, is_up) =
             if if_info.is_running && (if_info.ipv4.is_some() || if_info.ipv6.is_some()) {
                 (Color::Good, true)
             } else if if_info.is_running {
                 (Color::Mediocre, true)
             } else {
                 (Color::Bad, false)
-            };
+            }
+        } else {
+            (Color::Bad, false)
+        };
 
         self.buf.clear();
         if is_up {
@@ -116,6 +130,16 @@ impl widget::Widget for Widget {
 enum IfType {
     Ethernet,
     Wireless,
+}
+
+impl IfType {
+    fn is_wireless(&self) -> bool {
+        if let IfType::Wireless = self {
+            true
+        } else {
+            false
+        }
+    }
 }
 
 #[derive(Copy, Clone, Debug)]

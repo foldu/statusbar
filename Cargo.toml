@@ -26,3 +26,6 @@ alsa = "0.2.0"
 console = "0.6.2"
 nix = "0.11.0"
 delegate = "0.1.3"
+
+[profile.release]
+lto = true
