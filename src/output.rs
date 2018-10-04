@@ -25,10 +25,10 @@ pub enum Color {
     Bad,
 }
 
-pub fn output_from_format(sep: &str, colors: &ColorCfg, fmt: Format) -> Box<dyn Output> {
+pub fn output_from_format(sep: &str, colors: ColorCfg, fmt: Format) -> Box<dyn Output> {
     match fmt {
-        Format::Awesome => Box::new(awesome::Output::new(sep, &colors)),
-        Format::Terminal => Box::new(terminal::Output::new(sep, &colors)),
-        Format::I3 => Box::new(i3::Output::new(&colors)),
+        Format::Awesome => Box::new(awesome::Output::new(sep, colors)),
+        Format::Terminal => Box::new(terminal::Output::new(sep, colors)),
+        Format::I3 => Box::new(i3::Output::new(colors)),
     }
 }

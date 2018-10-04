@@ -31,7 +31,7 @@ impl Statusbar {
                 .into_iter()
                 .map(|kind| widget_from_kind(kind))
                 .collect(),
-            output: RefCell::new(output_from_format(&general.separator, &colors, format)),
+            output: RefCell::new(output_from_format(&general.separator, colors, format)),
             general_cfg: general,
             controller,
         };

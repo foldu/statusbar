@@ -11,12 +11,10 @@ pub struct Output {
 }
 
 impl Output {
-    pub fn new(colors: &ColorCfg) -> Self {
+    pub fn new(colors: ColorCfg) -> Self {
         Self {
             buf: String::new(),
-            cfg: Cfg {
-                colors: colors.hex.clone(),
-            },
+            cfg: Cfg { colors: colors.hex },
         }
     }
 }

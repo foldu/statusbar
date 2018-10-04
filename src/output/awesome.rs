@@ -18,12 +18,12 @@ pub struct Cfg {
 }
 
 impl Output {
-    pub fn new(sep: &str, colors: &ColorCfg) -> Self {
+    pub fn new(sep: &str, colors: ColorCfg) -> Self {
         Self {
             buf: String::new(),
             cfg: Cfg {
                 separator: sep.to_owned(),
-                colors: colors.hex.clone(),
+                colors: colors.hex,
             },
         }
     }
