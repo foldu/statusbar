@@ -1,21 +1,37 @@
 use std::{fs, io, path::PathBuf};
 
 use directories::BaseDirs;
-use failure::Fail;
+use failure::{format_err, Fail};
 use lazy_static::*;
 use serde_derive::{Deserialize, Serialize};
 
 use crate::{
-    output::{default_output, OutputKind},
+    output::ColorCfg,
     widget::{battery, datetime, mpd, net, volume, WidgetKind},
 };
 
 #[derive(Serialize, Deserialize, Debug, Clone, Copy)]
 #[serde(rename_all = "snake_case")]
-pub enum DefaultConfig {
+pub enum Format {
     Awesome,
     Terminal,
     I3,
+}
+
+impl std::str::FromStr for Format {
+    type Err = failure::Error;
+
+    fn from_str(s: &str) -> Result<Self, Self::Err> {
+        match s {
+            "awesome" => Ok(Format::Awesome),
+            "terminal" => Ok(Format::Terminal),
+            "i3" => Ok(Format::I3),
+            _ => Err(format_err!(
+                "Invalid format specifier: {}, accepted formats: awesome, terminal, i3",
+                s
+            )),
+        }
+    }
 }
 
 #[derive(Fail, Debug)]
@@ -41,14 +57,16 @@ impl From<io::Error> for Error {
 #[derive(Serialize, Deserialize, Debug, Clone)]
 pub struct GeneralCfg {
     pub color: bool,
+    pub default_output_format: Format,
     pub update_interval: u32,
     pub enable_desktop_notifications: bool,
+    pub separator: String,
 }
 
 #[derive(Serialize, Deserialize, Debug, Clone)]
 pub struct Config {
     pub general: GeneralCfg,
-    pub format: OutputKind,
+    pub colors: ColorCfg,
     pub widgets: Vec<WidgetKind>,
 }
 
@@ -67,14 +85,16 @@ impl Config {
         toml::from_str(&fs::read_to_string(&*CONFIG_PATH)?).map(Ok)?
     }
 
-    fn with_default_config(def: DefaultConfig) -> (String, Self) {
+    fn default() -> (String, Self) {
         let ret = Self {
             general: GeneralCfg {
                 color: true,
                 update_interval: 1000,
                 enable_desktop_notifications: true,
+                separator: " | ".to_owned(),
+                default_output_format: Format::Terminal,
             },
-            format: default_output(def),
+            colors: ColorCfg::default(),
             widgets: vec![
                 WidgetKind::Mpd(mpd::Cfg::default()),
                 WidgetKind::Net(net::Cfg::default()),
@@ -86,23 +106,19 @@ impl Config {
         (toml::to_string_pretty(&ret).unwrap(), ret)
     }
 
-    pub fn write_default(def: DefaultConfig) -> Result<Self, Error> {
-        let (cont, ret) = Self::with_default_config(def);
-        fs::write(
-            &*CONFIG_PATH,
-            &cont
-            //&ron::ser::to_string_pretty(&ret, ron::ser::PrettyConfig::default()).unwrap(),
-        )?;
+    pub fn write_default() -> Result<Self, Error> {
+        let (cont, ret) = Self::default();
+        fs::write(&*CONFIG_PATH, &cont)?;
         Ok(ret)
     }
 
-    pub fn load_or_write_default(def: DefaultConfig) -> Result<Self, Error> {
+    pub fn load_or_write_default() -> Result<Self, Error> {
         match Self::load() {
             Ok(cfg) => Ok(cfg),
             Err(Error::Io(io_e)) => {
                 use std::io::ErrorKind;
                 if let ErrorKind::NotFound = io_e.kind() {
-                    Self::write_default(def)
+                    Self::write_default()
                 } else {
                     Err(Error::Io(io_e))
                 }
@@ -118,7 +134,6 @@ mod tests {
 
     #[test]
     fn default_config_works() {
-        Config::with_default_config(DefaultConfig::Terminal);
-        Config::with_default_config(DefaultConfig::Awesome);
+        Config::default();
     }
 }

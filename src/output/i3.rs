@@ -2,8 +2,8 @@ use std::fmt::{self, Write};
 
 use serde_derive::{Deserialize, Serialize};
 
-use super::HexRgb;
-use crate::output::{Color, GColors};
+use super::color::{ColorCfg, GColors, HexRgb};
+use crate::output::Color;
 
 pub struct Output {
     buf: String,
@@ -11,10 +11,12 @@ pub struct Output {
 }
 
 impl Output {
-    pub fn new(cfg: Cfg) -> Self {
+    pub fn new(colors: &ColorCfg) -> Self {
         Self {
             buf: String::new(),
-            cfg,
+            cfg: Cfg {
+                colors: colors.hex.clone(),
+            },
         }
     }
 }
@@ -22,18 +24,6 @@ impl Output {
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct Cfg {
     colors: GColors<HexRgb>,
-}
-
-impl Default for Cfg {
-    fn default() -> Self {
-        Self {
-            colors: GColors {
-                good: "#00FF00".parse().unwrap(),
-                bad: "#FF0000".parse().unwrap(),
-                mediocre: "#FFFF00".parse().unwrap(),
-            },
-        }
-    }
 }
 
 impl super::Output for Output {
@@ -53,9 +43,9 @@ impl super::Output for Output {
 
     fn write_colored(&mut self, c: Color, s: fmt::Arguments) {
         let color = match c {
-            Color::Good => &self.cfg.colors.good.0,
-            Color::Mediocre => &self.cfg.colors.mediocre.0,
-            Color::Bad => &self.cfg.colors.bad.0,
+            Color::Good => self.cfg.colors.good.as_ref(),
+            Color::Mediocre => self.cfg.colors.mediocre.as_ref(),
+            Color::Bad => self.cfg.colors.bad.as_ref(),
         };
         write!(
             self.buf,

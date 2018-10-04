@@ -4,8 +4,8 @@ use actix::prelude::Addr;
 
 use super::system::{Bar, ErrorLog};
 use crate::{
-    config::{Config, GeneralCfg},
-    output::{output_from_kind, Output},
+    config::{Config, Format, GeneralCfg},
+    output::{output_from_format, Output},
     widget::{widget_from_kind, Widget},
 };
 
@@ -20,26 +20,25 @@ impl Statusbar {
     pub fn new(
         Config {
             widgets,
-            format,
             general,
+            colors,
         }: Config,
         controller: Addr<Bar>,
-    ) -> Result<Self, failure::Error> {
+        format: Format,
+    ) -> Self {
         let ret = Self {
             widgets: widgets
                 .into_iter()
                 .map(|kind| widget_from_kind(kind))
                 .collect(),
-
-            output: RefCell::new(output_from_kind(format)),
-
+            output: RefCell::new(output_from_format(&general.separator, &colors, format)),
             general_cfg: general,
             controller,
         };
 
         ret.output.borrow_mut().init();
 
-        Ok(ret)
+        ret
     }
 
     pub fn update(&mut self) {

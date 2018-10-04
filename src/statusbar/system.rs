@@ -8,7 +8,7 @@ use log::*;
 use notify_rust::Notification;
 
 use super::statusbar::Statusbar;
-use crate::config::Config;
+use crate::config::{Config, Format};
 
 fn format_error(err: &failure::Error) -> String {
     let mut ret = format!("{}\n", err);
@@ -23,6 +23,7 @@ fn format_error(err: &failure::Error) -> String {
 
 pub struct Bar {
     bar: Statusbar,
+    output_format: Format,
     last_future_tick: SpawnHandle,
 }
 
@@ -52,7 +53,7 @@ impl Handler<NewConfig> for Bar {
     type Result = ();
     fn handle(&mut self, NewConfig(cfg): NewConfig, mut ctx: &mut Context<Self>) {
         ctx.cancel_future(self.last_future_tick);
-        self.bar = Statusbar::new(cfg, ctx.address()).unwrap();
+        self.bar = Statusbar::new(cfg, ctx.address(), self.output_format);
         info!("Updated config");
         self.bar.update();
         self.schedule_tick(&mut ctx);
@@ -143,14 +144,18 @@ impl Actor for ConfigWatcher {
     }
 }
 
-pub fn run(cfg: Config) {
+pub fn run(cfg: Config, output_format: Option<Format>) {
     let sys = System::new("bar");
-    let bar = Bar::create(|ctx: &mut Context<Bar>| {
+
+    let output_format = output_format.unwrap_or(cfg.general.default_output_format);
+
+    let bar = Bar::create(move |ctx: &mut Context<Bar>| {
         let last = ctx.notify_later(Update, tick_duration(cfg.general.update_interval));
         // FIXME:
-        let mut bar = Statusbar::new(cfg, ctx.address()).unwrap();
+        let mut bar = Statusbar::new(cfg, ctx.address(), output_format);
         bar.update();
         Bar {
+            output_format,
             bar,
             last_future_tick: last,
         }

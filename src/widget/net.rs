@@ -155,6 +155,7 @@ pub struct InterfaceBlacklist(HashSet<String>);
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
 #[serde(tag = "type")]
+#[serde(rename_all = "snake_case")]
 pub enum Interface {
     Dynamic {
         #[serde(deserialize_with = "deserialize_blacklist")]

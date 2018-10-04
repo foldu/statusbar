@@ -1,7 +1,6 @@
 use std::fmt::{self, Write};
 
-use serde_derive::{Deserialize, Serialize};
-
+use super::color::{ColorCfg, TerminalColors};
 use crate::output::Color;
 
 #[derive(Debug, Clone)]
@@ -10,58 +9,22 @@ pub struct Output {
     cfg: Cfg,
 }
 
-#[derive(Serialize, Deserialize)]
-#[serde(rename_all = "snake_case")]
-#[serde(remote = "console::Color")]
-enum ColorDef {
-    Black,
-    Red,
-    Green,
-    Yellow,
-    Blue,
-    Magenta,
-    Cyan,
-    White,
-}
-
-// need to duplicate instead of just using GColors because of serde proxy type
-#[derive(Debug, Clone, Serialize, Deserialize)]
-struct MeColors {
-    #[serde(with = "ColorDef")]
-    good: console::Color,
-    #[serde(with = "ColorDef")]
-    mediocre: console::Color,
-    #[serde(with = "ColorDef")]
-    bad: console::Color,
-}
-
-#[derive(Debug, Clone, Serialize, Deserialize)]
+#[derive(Debug, Clone)]
 pub struct Cfg {
     separator: String,
-    #[serde(with = "ColorDef")]
     separator_color: console::Color,
-    colors: MeColors,
-}
-
-impl Default for Cfg {
-    fn default() -> Self {
-        Self {
-            colors: MeColors {
-                good: console::Color::Green,
-                bad: console::Color::Red,
-                mediocre: console::Color::Yellow,
-            },
-            separator: " | ".into(),
-            separator_color: console::Color::Black,
-        }
-    }
+    colors: TerminalColors,
 }
 
 impl Output {
-    pub fn new(cfg: Cfg) -> Self {
+    pub fn new(sep: &str, colors: &ColorCfg) -> Self {
         Self {
             buf: String::new(),
-            cfg,
+            cfg: Cfg {
+                colors: colors.terminal.clone(),
+                separator: sep.to_owned(),
+                separator_color: colors.terminal_separator,
+            },
         }
     }
 }

@@ -8,37 +8,30 @@ mod statusbar;
 mod util;
 mod widget;
 
-use crate::config::{Config, DefaultConfig};
+use crate::config::{Config, Format};
 
-use failure::format_err;
 use structopt::StructOpt;
 
 #[derive(StructOpt, Debug)]
 struct Opt {
     /// Write default config
     #[structopt(long = "write-default")]
-    write_default: Option<String>,
+    write_default: bool,
+
+    #[structopt(short = "f", long = "format")]
+    format: Option<Format>,
 }
 
 fn run() -> Result<(), failure::Error> {
     let opt = Opt::from_args();
 
-    let cfg = match opt.write_default {
-        None => Config::load_or_write_default(DefaultConfig::Terminal)?,
-        Some(s) => {
-            // FIXME: put me somewhere else
-            // or wait for clap v3 with serde support
-            let def = match s.as_str() {
-                "awesome" => DefaultConfig::Awesome,
-                "terminal" => DefaultConfig::Terminal,
-                _ => return Err(format_err!("Invalid output format: {}", s)),
-            };
-
-            Config::write_default(def)?
-        }
+    let cfg = if opt.write_default {
+        Config::write_default()?
+    } else {
+        Config::load_or_write_default()?
     };
 
-    statusbar::run(cfg);
+    statusbar::run(cfg, opt.format);
     Ok(())
 }
 
