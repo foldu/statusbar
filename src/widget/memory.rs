@@ -69,6 +69,7 @@ impl super::Widget for Widget {
         );
         sink.write(format_args!(
             "{}",
+            // FIXME: don't use fmt_owned
             self.cfg.format.fmt_owned(&self.format_map)?
         ));
         Ok(())
