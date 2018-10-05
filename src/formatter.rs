@@ -166,10 +166,23 @@ impl Format {
             match op {
                 Op::PutString(ref s) => ret.push_str(s),
                 Op::PutMap(ref id) => put_from_fmt_map(ret, id)?,
-                Op::PutMapTrunc(ref id, n) => {
-                    let old_len = ret.len();
-                    put_from_fmt_map(ret, id)?;
-                    ret.truncate(old_len + n);
+                Op::PutMapTrunc(ref id, trunc_len) => {
+                    let cont = fmt_map
+                        .get(id)
+                        .ok_or_else(|| Error::NotInMap(id.to_owned()))?;
+                    if let MapCont::Float(n) = cont {
+                        // FIXME: forgive me father for I have sinned
+                        match trunc_len {
+                            1 => write!(ret, "{:.1}", n).unwrap(),
+                            2 => write!(ret, "{:.2}", n).unwrap(),
+                            3 => write!(ret, "{:.3}", n).unwrap(),
+                            _ => unimplemented!(),
+                        }
+                    } else {
+                        let old_len = ret.len();
+                        put_from_fmt_map(ret, id)?;
+                        ret.truncate(old_len + trunc_len);
+                    }
                 }
             }
         }
@@ -245,6 +258,7 @@ impl Format {
                     if c == '}' {
                         if trunc_len != 0 {
                             ret.push(Op::PutMapTrunc(str_buf.clone(), trunc_len));
+                            str_buf.clear();
                             trunc_len = 0;
                         } else {
                             return Err(ParseError::MissingTrunc(i));
