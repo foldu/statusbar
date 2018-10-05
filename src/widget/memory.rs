@@ -61,6 +61,7 @@ impl super::Widget for Widget {
     fn run(&mut self, sink: &mut Output) -> Result<(), failure::Error> {
         let available_pages = get_available_pages();
         let used = self.npages - available_pages;
+        // TODO: format these as bytes
         self.format_map.insert("used", used * self.pagesize);
         self.format_map.insert(
             "usedpercentage",
