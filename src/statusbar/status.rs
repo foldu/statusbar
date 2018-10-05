@@ -12,7 +12,6 @@ use crate::{
 pub struct Statusbar {
     widgets: Vec<Box<dyn Widget>>,
     general_cfg: GeneralCfg,
-    output: RefCell<Box<dyn Output>>,
     controller: Addr<Bar>,
 }
 
@@ -24,28 +23,23 @@ impl Statusbar {
             colors,
         }: Config,
         controller: Addr<Bar>,
-        format: Format,
     ) -> Self {
         let ret = Self {
             widgets: widgets.into_iter().map(widget_from_kind).collect(),
-            output: RefCell::new(output_from_format(&general.separator, colors, format)),
             general_cfg: general,
             controller,
         };
 
-        ret.output.borrow_mut().init();
-
         ret
     }
 
-    pub fn update(&mut self) {
-        let mut out = self.output.borrow_mut();
+    pub fn update(&mut self, out: &mut dyn Output) {
         out.start();
         for (i, widget) in self.widgets.iter_mut().enumerate() {
             if i != 0 {
                 out.write_sep();
             }
-            if let Err(e) = widget.run(&mut **out) {
+            if let Err(e) = widget.run(out) {
                 self.controller.do_send(ErrorLog(e));
             }
         }

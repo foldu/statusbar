@@ -61,4 +61,8 @@ impl super::Output for Output {
         }
         println!("{}],", self.buf);
     }
+
+    fn set_colors(&mut self, colors: &ColorCfg) {
+        self.cfg.colors = colors.hex.clone();
+    }
 }

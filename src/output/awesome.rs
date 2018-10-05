@@ -60,4 +60,12 @@ impl super::Output for Output {
     fn finish(&mut self) {
         println!("{}", self.buf);
     }
+
+    fn set_colors(&mut self, colors: &ColorCfg) {
+        self.cfg.colors = colors.hex.clone();
+    }
+
+    fn set_sep(&mut self, sep: String) {
+        self.cfg.separator = sep;
+    }
 }

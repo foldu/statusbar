@@ -8,7 +8,10 @@ use log::*;
 use notify_rust::Notification;
 
 use super::status::Statusbar;
-use crate::config::{Config, Format};
+use crate::{
+    config::{Config, Format},
+    output::{output_from_format, Output},
+};
 
 fn format_error(err: &failure::Error) -> String {
     let mut ret = format!("{}\n", err);
@@ -23,7 +26,7 @@ fn format_error(err: &failure::Error) -> String {
 
 pub struct Bar {
     bar: Statusbar,
-    output_format: Format,
+    output: Box<dyn Output>,
     last_future_tick: SpawnHandle,
 }
 
@@ -45,7 +48,7 @@ impl Handler<Update> for Bar {
     type Result = ();
     fn handle(&mut self, _msg: Update, mut ctx: &mut Context<Self>) {
         self.schedule_tick(&mut ctx);
-        self.bar.update();
+        self.bar.update(&mut *self.output);
     }
 }
 
@@ -53,9 +56,11 @@ impl Handler<NewConfig> for Bar {
     type Result = ();
     fn handle(&mut self, NewConfig(cfg): NewConfig, mut ctx: &mut Context<Self>) {
         ctx.cancel_future(self.last_future_tick);
-        self.bar = Statusbar::new(cfg, ctx.address(), self.output_format);
+        self.output.set_sep(cfg.general.separator.clone());
+        self.output.set_colors(&cfg.colors);
+        self.bar = Statusbar::new(cfg, ctx.address());
         info!("Updated config");
-        self.bar.update();
+        self.bar.update(&mut *self.output);
         self.schedule_tick(&mut ctx);
     }
 }
@@ -147,17 +152,19 @@ impl Actor for ConfigWatcher {
 pub fn run(cfg: Config, output_format: Option<Format>) {
     let sys = System::new("bar");
 
-    let output_format = output_format.unwrap_or(cfg.general.default_output_format);
+    let format = output_format.unwrap_or(cfg.general.default_output_format);
+    let mut output = output_from_format(cfg.general.separator.clone(), cfg.colors.clone(), format);
+    output.init();
 
     let bar = Bar::create(move |ctx: &mut Context<Bar>| {
         let last = ctx.notify_later(Update, tick_duration(cfg.general.update_interval));
         // FIXME:
-        let mut bar = Statusbar::new(cfg, ctx.address(), output_format);
-        bar.update();
+        let mut bar = Statusbar::new(cfg, ctx.address());
+        bar.update(&mut *output);
         Bar {
-            output_format,
             bar,
             last_future_tick: last,
+            output,
         }
     });
 
