@@ -1,11 +1,9 @@
-use std::cell::RefCell;
-
 use actix::prelude::Addr;
 
 use super::system::{Bar, ErrorLog};
 use crate::{
-    config::{Config, Format, GeneralCfg},
-    output::{output_from_format, Output},
+    config::{Config, GeneralCfg},
+    output::Output,
     widget::{widget_from_kind, Widget},
 };
 
@@ -18,9 +16,7 @@ pub struct Statusbar {
 impl Statusbar {
     pub fn new(
         Config {
-            widgets,
-            general,
-            colors,
+            widgets, general, ..
         }: Config,
         controller: Addr<Bar>,
     ) -> Self {

@@ -3,12 +3,17 @@ mod conn;
 use serde_derive::{Deserialize, Serialize};
 
 use self::conn::{MpdConnection, MpdStatus};
-use crate::{output::Output, widget};
+use crate::{
+    formatter::Format,
+    output::{Color, Output},
+    widget,
+};
 
 pub struct Widget {
     cfg: Cfg,
     conn: Option<MpdConnection>,
     status: MpdStatus,
+    buf: String,
 }
 
 impl Widget {
@@ -21,6 +26,7 @@ impl Widget {
                 _ => None,
             },
             cfg,
+            buf: String::new(),
             status: MpdStatus::default(),
         }
     }
@@ -28,27 +34,33 @@ impl Widget {
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct Cfg {
-    pub format_running: String,
-    pub format_paused: String,
-    pub format_stopped: String,
-    pub format_down: String,
+    pub format_running: Format,
+    pub format_paused: Format,
+    pub format_stopped: Format,
+    pub format_down: Format,
     pub endpoint: String,
 }
 
 impl Default for Cfg {
     fn default() -> Self {
         Self {
-            format_running: "mpd: {artist} - {title}".into(),
-            format_stopped: "mpd: stopped".into(),
-            format_paused: "mpd: paused {artist} - {title}".into(),
-            format_down: "mpd: ded".into(),
-            endpoint: "localhost:6600".into(),
+            format_running: "mpd: {artist} - {title}".parse().unwrap(),
+            format_stopped: "mpd: stopped".parse().unwrap(),
+            format_paused: "mpd: paused {artist} - {title}".parse().unwrap(),
+            format_down: "mpd: ded".parse().unwrap(),
+            endpoint: "localhost:6600".parse().unwrap(),
         }
     }
 }
 
 impl widget::Widget for Widget {
-    fn run(&mut self, _sink: &mut dyn Output) -> Result<(), failure::Error> {
+    fn run(&mut self, sink: &mut dyn Output) -> Result<(), failure::Error> {
+        if let Some(ref conn) = self.conn {
+        } else {
+            self.buf.clear();
+            self.cfg.format_down.fmt_no_lookup(&mut self.buf);
+            sink.write_colored(Color::Bad, format_args!("{}", self.buf))
+        }
         Ok(())
     }
 }

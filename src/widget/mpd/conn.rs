@@ -73,8 +73,8 @@ impl MpdConnection {
 
         let mut buf = [0u8; 32];
 
-        ret.sock.read(&mut buf)?;
-        if !buf.starts_with(b"OK MPD ") {
+        let nbytes = ret.sock.read(&mut buf)?;
+        if !buf[..nbytes].starts_with(b"OK MPD ") {
             Err(Error::NotMpd)
         } else {
             Ok(ret)
@@ -126,7 +126,7 @@ impl MpdConnection {
         F: FnMut(&str, &str) -> Option<()>,
     {
         assert!(cmd.ends_with('\n'));
-        self.sock.get_mut().write(cmd.as_bytes())?;
+        self.sock.get_mut().write_all(cmd.as_bytes())?;
 
         loop {
             self.buf.clear();
