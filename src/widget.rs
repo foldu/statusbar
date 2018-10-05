@@ -1,5 +1,6 @@
 pub mod battery;
 pub mod datetime;
+pub mod memory;
 #[allow(dead_code)]
 pub mod mpd;
 pub mod net;
@@ -22,6 +23,7 @@ pub enum WidgetKind {
     Mpd(mpd::Cfg),
     Volume(volume::Cfg),
     Net(net::Cfg),
+    Memory(memory::Cfg),
 }
 
 pub fn widget_from_kind(kind: WidgetKind) -> Box<dyn Widget> {
@@ -32,5 +34,6 @@ pub fn widget_from_kind(kind: WidgetKind) -> Box<dyn Widget> {
         Mpd(cfg) => Box::new(mpd::Widget::new(cfg)),
         Volume(cfg) => Box::new(volume::Widget::new(cfg)),
         Net(cfg) => Box::new(net::Widget::new(cfg)),
+        Memory(cfg) => Box::new(memory::Widget::new(cfg)),
     }
 }
