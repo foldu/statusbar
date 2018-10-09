@@ -1,0 +1,10 @@
+[package]
+name = "linux_sensors"
+version = "0.1.0"
+authors = ["foldu <foldu@protonmail.com>"]
+edition = "2018"
+license = "LGPL-2.1-or-later"
+
+[dependencies]
+[build-dependencies]
+bindgen = "0.42.1"
