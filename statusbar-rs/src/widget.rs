@@ -4,6 +4,9 @@ pub mod memory;
 #[allow(dead_code)]
 pub mod mpd;
 pub mod net;
+pub mod temp;
+// FIXME: entire module assumes to be on linux
+#[cfg(target_os = "linux")]
 pub mod volume;
 
 use serde_derive::{Deserialize, Serialize};

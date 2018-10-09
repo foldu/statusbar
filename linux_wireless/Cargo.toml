@@ -1,0 +1,9 @@
+[package]
+name = "linux_wireless"
+version = "0.1.0"
+authors = ["foldu <foldu@protonmail.com>"]
+edition = "2018"
+license = "GPL-2.0 WITH Linux-syscall-note"
+
+[build-dependencies]
+bindgen = "0.42.1"

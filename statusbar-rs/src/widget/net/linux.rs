@@ -1,11 +1,9 @@
 use std::{convert::TryFrom, mem, ptr};
 
+use linux_wireless::{iwreq, IFNAMSIZ, SIOCGIWNAME};
 use nix::{convert_ioctl_res, ioctl_read_bad};
 
-use super::{
-    linux_wireless::{iwreq, IFNAMSIZ, SIOCGIWNAME},
-    unix::InetStreamSock,
-};
+use super::unix::InetStreamSock;
 
 ioctl_read_bad!(siocgiwname, SIOCGIWNAME, iwreq);
 

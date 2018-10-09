@@ -17,4 +17,7 @@ fn if_test() {
 
     assert!(test.get("lo").is_none());
     println!("{:#?}", test);
+
+    use nix::ifaddrs::getifaddrs;
+    println!("{:#?}", getifaddrs().unwrap().collect::<Vec<_>>());
 }

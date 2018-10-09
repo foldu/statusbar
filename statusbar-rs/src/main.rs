@@ -1,5 +1,6 @@
 #![feature(try_from, tool_lints)]
 
+mod bytes;
 mod config;
 mod formatter;
 mod output;
