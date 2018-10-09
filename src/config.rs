@@ -7,7 +7,7 @@ use serde_derive::{Deserialize, Serialize};
 
 use crate::{
     output::ColorCfg,
-    widget::{battery, datetime, mpd, net, volume, WidgetKind},
+    widget::{battery, datetime, memory, mpd, net, temp, volume, WidgetKind},
 };
 
 #[derive(Serialize, Deserialize, Debug, Clone, Copy)]
@@ -96,6 +96,8 @@ impl Config {
             },
             colors: ColorCfg::default(),
             widgets: vec![
+                WidgetKind::Temp(temp::Cfg::default()),
+                WidgetKind::Memory(memory::Cfg::default()),
                 WidgetKind::Mpd(mpd::Cfg::default()),
                 WidgetKind::Net(net::Cfg::default()),
                 WidgetKind::Battery(battery::Cfg::default()),

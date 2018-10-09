@@ -105,6 +105,14 @@ pub struct Cfg {
     format: Format,
 }
 
+impl Default for Cfg {
+    fn default() -> Self {
+        Self {
+            format: "{used}/{free} {full:2}%".parse().unwrap(),
+        }
+    }
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;

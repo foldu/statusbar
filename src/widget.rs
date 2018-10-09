@@ -27,6 +27,7 @@ pub enum WidgetKind {
     Volume(volume::Cfg),
     Net(net::Cfg),
     Memory(memory::Cfg),
+    Temp(temp::Cfg),
 }
 
 pub fn widget_from_kind(kind: WidgetKind) -> Box<dyn Widget> {
@@ -38,5 +39,7 @@ pub fn widget_from_kind(kind: WidgetKind) -> Box<dyn Widget> {
         Volume(cfg) => Box::new(volume::Widget::new(cfg)),
         Net(cfg) => Box::new(net::Widget::new(cfg)),
         Memory(cfg) => Box::new(memory::Widget::new(cfg)),
+        // FIXME:
+        Temp(cfg) => Box::new(temp::Widget::new(cfg).expect("FIXME")),
     }
 }
