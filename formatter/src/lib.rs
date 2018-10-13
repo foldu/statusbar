@@ -3,7 +3,7 @@ mod parser;
 #[cfg(test)]
 mod tests;
 
-use std::{collections::HashMap, fmt, str};
+use std::{collections::HashMap, fmt, str, time::Duration};
 
 use noisy_float::prelude::*;
 use num_traits::cast::ToPrimitive;
@@ -216,6 +216,7 @@ impl Formatable for MapCont {
                 })?;
                 Ok(())
             }
+
             MapCont::Number(n) => {
                 let significant_digits = opt.significant_digits.unwrap_or(0);
 
@@ -233,6 +234,12 @@ impl Formatable for MapCont {
                 } else {
                     write_float(fmt, *n, significant_digits)
                 }
+            }
+
+            MapCont::Duration(duration) => {
+                let minutes = duration.as_secs() / 60;
+                let seconds = duration.as_secs() - (minutes * 60);
+                write!(fmt, "{:02}:{:02}", minutes, seconds)
             }
         }
     }
@@ -293,6 +300,7 @@ unitize!(1000., unitize_si);
 pub enum MapCont {
     Number(R64),
     Str(String),
+    Duration(Duration),
 }
 
 impl From<String> for MapCont {
@@ -310,6 +318,12 @@ impl From<R64> for MapCont {
 impl From<f64> for MapCont {
     fn from(n: f64) -> Self {
         MapCont::Number(R64::new(n))
+    }
+}
+
+impl From<Duration> for MapCont {
+    fn from(duration: Duration) -> Self {
+        MapCont::Duration(duration)
     }
 }
 
