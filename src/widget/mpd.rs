@@ -1,6 +1,6 @@
 mod conn;
 
-use std::cell::RefCell;
+use std::{cell::RefCell, time::Duration};
 
 use failure::format_err;
 use formatter::{FormatMap, FormatString};
@@ -92,9 +92,11 @@ impl widget::Widget for Widget {
                     self.fmt_map
                         .update_string_with("file", |s| s.push_str(&status.file));
 
-                    self.fmt_map.insert("duration", status.duration as f64);
+                    self.fmt_map
+                        .insert("duration", Duration::from_secs(status.duration));
 
-                    self.fmt_map.insert("elapsed", status.elapsed as f64);
+                    self.fmt_map
+                        .insert("elapsed", Duration::from_secs(status.elapsed));
 
                     let fmt = if status.paused {
                         &self.format_paused

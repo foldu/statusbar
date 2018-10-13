@@ -33,8 +33,8 @@ impl From<io::Error> for Error {
 #[derive(Debug, Default, Clone)]
 pub struct MpdStatus {
     pub volume: i32,
-    pub elapsed: u32,
-    pub duration: u32,
+    pub elapsed: u64,
+    pub duration: u64,
     pub artist: OptionalString,
     pub file: String,
     pub title: OptionalString,
@@ -86,9 +86,9 @@ impl MpdConnection {
             if key == "volume" {
                 status.inner.volume = val.parse().ok()?;
             } else if key == "elapsed" {
-                status.inner.elapsed = val.parse::<f64>().ok()?.floor() as u32;
+                status.inner.elapsed = val.parse::<f64>().ok()?.floor() as u64;
             } else if key == "duration" {
-                status.inner.duration = val.parse::<f64>().ok()?.floor() as u32;
+                status.inner.duration = val.parse::<f64>().ok()?.floor() as u64;
             } else if key == "state" {
                 if val == "stop" {
                     status.stopped = true;
