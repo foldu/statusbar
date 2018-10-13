@@ -205,7 +205,7 @@ impl Formatable for MapCont {
                                 }
                             },
                         )
-                        .unwrap_or(s.len())
+                        .unwrap_or_else(|| s.len())
                 } else {
                     s.len()
                 };
@@ -220,13 +220,13 @@ impl Formatable for MapCont {
             MapCont::Number(n) => {
                 let significant_digits = opt.significant_digits.unwrap_or(0);
 
-                let si_lookup = ["", "k", "M", "G", "T", "P"];
-                let bin_lookup = ["", "ki", "Mi", "Gi", "Ti", "Pi"];
+                const SI_LOOKUP: [&str; 6] = ["", "k", "M", "G", "T", "P"];
+                const BIN_LOOKUP: [&str; 6] = ["", "ki", "Mi", "Gi", "Ti", "Pi"];
 
                 if let Some(unit) = opt.unit {
                     let ((out_n, index), table) = match unit {
-                        Unit::Si => (unitize_si(*n), &si_lookup),
-                        Unit::Bin => (unitize_bin(*n), &bin_lookup),
+                        Unit::Si => (unitize_si(*n), &SI_LOOKUP),
+                        Unit::Bin => (unitize_bin(*n), &BIN_LOOKUP),
                     };
                     write_float(fmt, out_n, significant_digits)?;
                     fmt.write_str(table[index])?;
