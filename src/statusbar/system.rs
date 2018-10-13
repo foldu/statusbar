@@ -167,8 +167,9 @@ pub fn run(cfg: Config, output_format: Option<Format>) {
 
     let bar = Bar::create(move |ctx: &mut Context<Bar>| {
         let last = ctx.notify_later(Update, tick_duration(cfg.general.update_interval));
-        // FIXME:
-        let mut bar = Statusbar::new(cfg, ctx.address()).unwrap_or_else(|_| {
+
+        let mut bar = Statusbar::new(cfg, ctx.address()).unwrap_or_else(|e| {
+            ctx.address().do_send(ErrorLog(e));
             let general = crate::config::GeneralCfg::default();
             Statusbar::secure_default(ctx.address(), general)
         });

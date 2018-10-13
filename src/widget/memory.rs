@@ -1,5 +1,3 @@
-use std::fmt::Write;
-
 use formatter::{FormatMap, FormatString};
 use serde_derive::{Deserialize, Serialize};
 
@@ -35,6 +33,7 @@ fn get_memory_info() -> MemoryInfo {
     }
 
     let mut fh = File::open("/proc/meminfo").expect("Can't open /proc/meminfo");
+    // just assume all interesting parts of /proc/meminfo fit in 8192 bytes
     let mut buf = [0; 8192];
     let nbytes = fh.read(&mut buf).unwrap();
 
