@@ -93,7 +93,7 @@ impl MpdConnection {
                 if val == "stop" {
                     status.stopped = true;
                 } else {
-                    println!("{}", val);
+                    status.stopped = false;
                     status.inner.paused = val == "pause";
                 }
             }

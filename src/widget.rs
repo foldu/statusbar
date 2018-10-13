@@ -34,7 +34,7 @@ pub fn widget_from_kind(kind: WidgetKind) -> Result<Box<dyn Widget>, failure::Er
     Ok(match kind {
         Battery(cfg) => Box::new(battery::Widget::new(cfg)?),
         Datetime(cfg) => Box::new(datetime::Widget::new(cfg)),
-        Mpd(cfg) => Box::new(mpd::Widget::new(cfg)),
+        Mpd(cfg) => Box::new(mpd::Widget::new(cfg)?),
         Volume(cfg) => Box::new(volume::Widget::new(cfg)?),
         Net(cfg) => Box::new(net::Widget::new(cfg)?),
         Memory(cfg) => Box::new(memory::Widget::new(cfg)?),
