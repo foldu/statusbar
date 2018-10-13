@@ -3,7 +3,7 @@ use std::fmt::Write;
 use formatter::{FormatMap, FormatString};
 use serde_derive::{Deserialize, Serialize};
 
-use crate::{bytes::Bytes, output::Output};
+use crate::output::Output;
 
 pub struct Widget {
     format: FormatString,
