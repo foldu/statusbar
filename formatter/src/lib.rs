@@ -243,7 +243,14 @@ fn write_float(fmt: &mut fmt::Formatter<'_>, n: R64, significant_digits: u8) -> 
     let s = rbuf.format(n.to_f64().unwrap());
     // should be no problem because it's a R64, max(1.0) is called on it ergo log10 should always
     // work and floor always works too
-    let digits_before_dot = n.max(R64::new(1.0)).log10().floor().to_usize().unwrap() + 1;
+    let digits_before_dot = n
+        .abs()
+        .max(R64::new(1.0))
+        .log10()
+        .floor()
+        .to_usize()
+        .unwrap()
+        + 1;
     let bytes_to_write = if significant_digits == 0 {
         digits_before_dot
     } else {

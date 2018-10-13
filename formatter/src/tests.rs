@@ -43,4 +43,8 @@ fn format() {
     map.insert("test", "asdf".to_owned());
     let fmt = FormatString::parse("{test:-20} this").unwrap();
     assert_eq!("asdf this", &fmt.fmt(&map).unwrap().to_string());
+
+    map.insert("test", -20.0);
+    let fmt = FormatString::parse("{test:.2} this").unwrap();
+    assert_eq!("-20.00 this", &fmt.fmt(&map).unwrap().to_string());
 }

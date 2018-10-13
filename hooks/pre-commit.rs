@@ -100,7 +100,7 @@ fn run_tests() -> bool {
     print!("Running tests, please wait warmly ");
     flush_stdout();
     let spin = Spinner::spawn();
-    let out = read_cmd_output("cargo", &["test"]).unwrap();
+    let out = read_cmd_output("cargo", &["test", "--all"]).unwrap();
     spin.stop();
     clear_line();
     if out.status.success() {
