@@ -278,7 +278,7 @@ macro_rules! unitize {
     ($limit:expr, $ident:ident) => {
         fn $ident(mut n: R64) -> (R64, usize) {
             let mut index = 0;
-            while n > $limit {
+            while n >= $limit {
                 n /= $limit;
                 index += 1;
             }
