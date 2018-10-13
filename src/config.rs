@@ -63,6 +63,18 @@ pub struct GeneralCfg {
     pub separator: String,
 }
 
+impl Default for GeneralCfg {
+    fn default() -> Self {
+        Self {
+            color: true,
+            update_interval: 1000,
+            enable_desktop_notifications: true,
+            separator: " | ".to_owned(),
+            default_output_format: Format::Terminal,
+        }
+    }
+}
+
 #[derive(Serialize, Deserialize, Debug, Clone)]
 pub struct Config {
     pub general: GeneralCfg,
@@ -87,13 +99,7 @@ impl Config {
 
     fn default() -> (String, Self) {
         let ret = Self {
-            general: GeneralCfg {
-                color: true,
-                update_interval: 1000,
-                enable_desktop_notifications: true,
-                separator: " | ".to_owned(),
-                default_output_format: Format::Terminal,
-            },
+            general: GeneralCfg::default(),
             colors: ColorCfg::default(),
             widgets: vec![
                 WidgetKind::Temp(temp::Cfg::default()),

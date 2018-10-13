@@ -2,7 +2,6 @@
 
 mod bytes;
 mod config;
-mod formatter;
 mod output;
 mod parse;
 mod statusbar;

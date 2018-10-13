@@ -56,11 +56,20 @@ impl Handler<NewConfig> for Bar {
     type Result = ();
     fn handle(&mut self, NewConfig(cfg): NewConfig, mut ctx: &mut Context<Self>) {
         ctx.cancel_future(self.last_future_tick);
-        self.output.set_sep(cfg.general.separator.clone());
-        self.output.set_colors(&cfg.colors);
-        self.bar = Statusbar::new(cfg, ctx.address());
-        info!("Updated config");
-        self.bar.update(&mut *self.output);
+        let sep = cfg.general.separator.clone();
+        let colors = cfg.colors.clone();
+        match Statusbar::new(cfg, ctx.address()) {
+            Ok(bar) => {
+                self.bar = bar;
+                self.output.set_sep(sep);
+                self.output.set_colors(&colors);
+                info!("Updated config");
+                self.bar.update(&mut *self.output);
+            }
+            Err(e) => {
+                ctx.address().do_send(ErrorLog(e));
+            }
+        }
         self.schedule_tick(&mut ctx);
     }
 }
@@ -159,7 +168,10 @@ pub fn run(cfg: Config, output_format: Option<Format>) {
     let bar = Bar::create(move |ctx: &mut Context<Bar>| {
         let last = ctx.notify_later(Update, tick_duration(cfg.general.update_interval));
         // FIXME:
-        let mut bar = Statusbar::new(cfg, ctx.address());
+        let mut bar = Statusbar::new(cfg, ctx.address()).unwrap_or_else(|_| {
+            let general = crate::config::GeneralCfg::default();
+            Statusbar::secure_default(ctx.address(), general)
+        });
         bar.update(&mut *output);
         Bar {
             bar,

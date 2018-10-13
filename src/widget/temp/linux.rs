@@ -110,10 +110,8 @@ impl Sensor {
                 break;
             }
 
-            if !names
-                .iter()
-                .any(|cs| cs.as_ref() == unsafe { CStr::from_ptr((*chip).prefix) })
-            {
+            let prefix = unsafe { CStr::from_ptr((*chip).prefix) };
+            if !names.iter().any(|cs| cs.as_ref() == prefix) {
                 continue;
             }
 

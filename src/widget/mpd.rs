@@ -1,10 +1,10 @@
 mod conn;
 
+use formatter::{FormatMap, FormatString};
 use serde_derive::{Deserialize, Serialize};
 
 use self::conn::{MpdConnection, MpdStatus};
 use crate::{
-    formatter::Format,
     output::{Color, Output},
     widget,
 };
@@ -34,10 +34,10 @@ impl Widget {
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct Cfg {
-    pub format_running: Format,
-    pub format_paused: Format,
-    pub format_stopped: Format,
-    pub format_down: Format,
+    pub format_running: String,
+    pub format_paused: String,
+    pub format_stopped: String,
+    pub format_down: String,
     pub endpoint: String,
 }
 
@@ -57,9 +57,6 @@ impl widget::Widget for Widget {
     fn run(&mut self, sink: &mut dyn Output) -> Result<(), failure::Error> {
         if let Some(ref conn) = self.conn {
         } else {
-            self.buf.clear();
-            self.cfg.format_down.fmt_no_lookup(&mut self.buf);
-            sink.write_colored(Color::Bad, format_args!("{}", self.buf))
         }
         Ok(())
     }

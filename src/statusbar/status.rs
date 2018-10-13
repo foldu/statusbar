@@ -19,14 +19,17 @@ impl Statusbar {
             widgets, general, ..
         }: Config,
         controller: Addr<Bar>,
-    ) -> Self {
-        let ret = Self {
-            widgets: widgets.into_iter().map(widget_from_kind).collect(),
+    ) -> Result<Self, failure::Error> {
+        let widgets = widgets
+            .into_iter()
+            .map(widget_from_kind)
+            .collect::<Result<_, _>>()?;
+
+        Ok(Self {
+            widgets,
             general_cfg: general,
             controller,
-        };
-
-        ret
+        })
     }
 
     pub fn update(&mut self, out: &mut dyn Output) {
@@ -48,5 +51,17 @@ impl Statusbar {
 
     pub fn desktop_notifications_enabled(&self) -> bool {
         self.general_cfg.enable_desktop_notifications
+    }
+
+    pub fn secure_default(controller: Addr<Bar>, general_cfg: GeneralCfg) -> Self {
+        use crate::widget::{datetime, net};
+        Self {
+            widgets: vec![
+                Box::new(net::Widget::new(net::Cfg::default()).unwrap()),
+                Box::new(datetime::Widget::new(datetime::Cfg::default())),
+            ],
+            general_cfg,
+            controller,
+        }
     }
 }

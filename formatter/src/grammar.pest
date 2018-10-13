@@ -1,0 +1,14 @@
+format_string = { soi ~ (maybe_format | text)* ~ eoi }
+soi = _{ SOI }
+eoi = _{ EOI }
+maybe_format = { open_curly | close_curly | format }
+open_curly = { "{{" }
+close_curly = { "}}" }
+text = { (!("{" | "}") ~ ANY)+ }
+format = { "{" ~ ident ~ (":" ~ format_spec)? ~ "}" }
+ident = { ASCII_ALPHA ~ (ASCII_ALPHANUMERIC | "_")* }
+format_spec = { ("-" ~ trunc)? ~ unit? ~ ("." ~ precision)? }
+unit = { "S" | "B" }
+nat = _{ "0" | (ASCII_NONZERO_DIGIT ~ ASCII_DIGIT*) }
+trunc = { nat }
+precision = { nat }

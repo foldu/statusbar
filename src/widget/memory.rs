@@ -1,30 +1,28 @@
 use std::fmt::Write;
 
+use formatter::{FormatMap, FormatString};
 use serde_derive::{Deserialize, Serialize};
 
-use crate::{
-    bytes::Bytes,
-    formatter::{Format, FormatMap},
-    output::Output,
-};
+use crate::{bytes::Bytes, output::Output};
 
 pub struct Widget {
-    cfg: Cfg,
-    format_map: FormatMap,
-    buf: String,
+    format: FormatString,
+    fmt_map: FormatMap,
 }
 
 impl Widget {
-    pub fn new(cfg: Cfg) -> Self {
-        let mut format_map = FormatMap::new();
+    pub fn new(cfg: Cfg) -> Result<Self, failure::Error> {
+        let mut fmt_map = FormatMap::new();
         let mem_info = get_memory_info();
-        format_map.insert("full", Bytes(mem_info.total).display_si().to_string());
+        fmt_map.insert("full", mem_info.total as f64);
 
-        Self {
-            format_map,
-            cfg,
-            buf: String::new(),
-        }
+        Ok(Self {
+            fmt_map,
+            format: FormatString::parse_with_allowed_keys(
+                &cfg.format,
+                &["full", "used", "percent_used"],
+            )?,
+        })
     }
 }
 
@@ -83,32 +81,27 @@ impl super::Widget for Widget {
     fn run(&mut self, sink: &mut Output) -> Result<(), failure::Error> {
         let mem_info = get_memory_info();
 
-        self.format_map.update_string_with("used", |s| {
-            s.clear();
-            write!(s, "{}", Bytes(mem_info.used).display_si()).unwrap();
-        });
+        self.fmt_map.insert("used", mem_info.used as f64);
 
-        self.format_map.insert(
-            "usedpercentage",
+        self.fmt_map.insert(
+            "percent_used",
             mem_info.used as f64 / mem_info.total as f64 * 100.,
         );
 
-        self.buf.clear();
-        self.cfg.format.fmt(&mut self.buf, &self.format_map)?;
-        sink.write(format_args!("{}", &self.buf));
+        sink.write(format_args!("{}", self.format.fmt(&self.fmt_map)?));
         Ok(())
     }
 }
 
 #[derive(Serialize, Deserialize, Debug, Clone)]
 pub struct Cfg {
-    format: Format,
+    format: String,
 }
 
 impl Default for Cfg {
     fn default() -> Self {
         Self {
-            format: "{used}/{free} {full:2}%".parse().unwrap(),
+            format: "{used:S.2}/{full:S.2} {percent_used:.2}%".parse().unwrap(),
         }
     }
 }

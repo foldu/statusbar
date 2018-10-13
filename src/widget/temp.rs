@@ -1,23 +1,18 @@
 #[cfg(target_os = "linux")]
 mod linux;
 
-use std::fmt;
-
-use failure::format_err;
+use formatter::{FormatMap, FormatString};
 use serde_derive::{Deserialize, Serialize};
 
 #[cfg(target_os = "linux")]
 use self::linux::Sensor;
-use crate::{
-    formatter::{Format, FormatMap},
-    output::Output,
-};
+use crate::output::Output;
 
 pub struct Widget {
-    format_map: FormatMap,
-    buf: String,
+    fmt_map: FormatMap,
+    format: FormatString,
+    unit: Unit,
     sensor: Sensor,
-    cfg: Cfg,
 }
 
 impl Widget {
@@ -30,9 +25,9 @@ impl Widget {
 
         Ok(Self {
             sensor,
-            cfg,
-            format_map: FormatMap::new(),
-            buf: String::new(),
+            fmt_map: FormatMap::new(),
+            unit: cfg.unit,
+            format: FormatString::parse_with_allowed_keys(&cfg.format, &["temp"])?,
         })
     }
 }
@@ -40,17 +35,15 @@ impl Widget {
 impl super::Widget for Widget {
     fn run(&mut self, sink: &mut dyn Output) -> Result<(), failure::Error> {
         let temp = self.sensor.get_temp()?;
-        self.format_map.insert(
+        self.fmt_map.insert(
             "temp",
-            match self.cfg.unit {
+            match self.unit {
                 Unit::Celsius => temp.0,
                 Unit::Kelvin => Kelvin::from(temp).0,
             },
         );
 
-        self.buf.clear();
-        self.cfg.format.fmt(&mut self.buf, &self.format_map)?;
-        sink.write(format_args!("{}", self.buf));
+        sink.write(format_args!("{}", self.format.fmt(&self.fmt_map)?));
 
         Ok(())
     }
@@ -76,7 +69,7 @@ pub enum Unit {
 #[serde(rename_all = "snake_case")]
 pub struct Cfg {
     unit: Unit,
-    format: Format,
+    format: String,
     dev: Device,
 }
 
@@ -84,7 +77,7 @@ impl Default for Cfg {
     fn default() -> Self {
         Self {
             unit: Unit::Celsius,
-            format: "cpu: {temp}C".parse().unwrap(),
+            format: "cpu: {temp:.2}°C".to_owned(),
             dev: Device::FirstCpu,
         }
     }

@@ -4,10 +4,10 @@ use alsa::{
     Mixer,
 };
 use failure::format_err;
+use formatter::{FormatMap, FormatString};
 use serde_derive::{Deserialize, Serialize};
 
 use crate::{
-    formatter::{Format, FormatMap},
     output::{Color, Output},
     widget,
 };
@@ -86,44 +86,52 @@ impl AlsaConn {
 }
 
 pub struct Widget {
-    cfg: Cfg,
     conn: Option<AlsaConn>,
-    map: FormatMap,
-    buf: String,
+    fmt_map: FormatMap,
+    mixer: String,
+    device: String,
+    mixer_index: u32,
+    channel_id: SelemChannelId,
+    format: FormatString,
+    format_muted: FormatString,
 }
 
 impl Widget {
-    pub fn new(cfg: Cfg) -> Self {
+    pub fn new(cfg: Cfg) -> Result<Self, failure::Error> {
         let conn = AlsaConn::connect(&cfg.mixer, &cfg.device, cfg.mixer_index).ok();
-        Self {
+        Ok(Self {
             conn,
-            cfg,
-            map: FormatMap::new(),
-            buf: String::new(),
-        }
+            fmt_map: FormatMap::new(),
+            mixer: cfg.mixer,
+            device: cfg.device,
+            mixer_index: cfg.mixer_index,
+            channel_id: cfg.channel_id,
+            format: FormatString::parse_with_allowed_keys(&cfg.format, &["volume"])?,
+            format_muted: FormatString::parse_with_allowed_keys(&cfg.format_muted, &["volume"])?,
+        })
     }
 }
 
 impl widget::Widget for Widget {
     fn run(&mut self, sink: &mut dyn Output) -> Result<(), failure::Error> {
         if let Some(ref mut conn) = self.conn {
-            let mixer = connect_mixer(&self.cfg.mixer)?;
-            let selem = conn.get_selem(&mixer, &self.cfg.device, self.cfg.mixer_index)?;
-            let volume = conn.get_volume(&selem, self.cfg.channel_id)?;
-            let is_muted = conn.is_muted(&selem, self.cfg.channel_id)?;
+            let mixer = connect_mixer(&self.mixer)?;
+            let selem = conn.get_selem(&mixer, &self.device, self.mixer_index)?;
+            let volume = conn.get_volume(&selem, self.channel_id)?;
+            let is_muted = conn.is_muted(&selem, self.channel_id)?;
 
-            self.buf.clear();
-            self.map.insert("volume", volume);
+            self.fmt_map.insert("volume", volume as f64);
 
             if is_muted {
-                self.cfg.format_muted.fmt(&mut self.buf, &self.map)?;
-                sink.write_colored(Color::Mediocre, format_args!("{}", self.buf));
+                sink.write_colored(
+                    Color::Mediocre,
+                    format_args!("{}", self.format_muted.fmt(&self.fmt_map)?),
+                );
             } else {
-                self.cfg.format.fmt(&mut self.buf, &self.map)?;
-                sink.write(format_args!("{}", self.buf));
+                sink.write(format_args!("{}", self.format.fmt(&self.fmt_map)?));
             }
         } else {
-            let conn = AlsaConn::connect(&self.cfg.mixer, &self.cfg.device, self.cfg.mixer_index)?;
+            let conn = AlsaConn::connect(&self.mixer, &self.device, self.mixer_index)?;
             self.conn = Some(conn);
         }
 
@@ -155,8 +163,8 @@ pub struct Cfg {
     pub mixer_index: u32,
     #[serde(with = "SelemChannelIdDef")]
     pub channel_id: SelemChannelId,
-    pub format: Format,
-    pub format_muted: Format,
+    pub format: String,
+    pub format_muted: String,
 }
 
 impl Default for Cfg {
@@ -166,8 +174,8 @@ impl Default for Cfg {
             device: "Master".to_owned(),
             mixer_index: 0,
             channel_id: SelemChannelId::FrontLeft,
-            format: Format::parse("vol: {volume}%").unwrap(),
-            format_muted: Format::parse("vol: muted").unwrap(),
+            format: "vol: {volume}%".to_owned(),
+            format_muted: "vol: muted".to_owned(),
         }
     }
 }

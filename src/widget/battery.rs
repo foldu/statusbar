@@ -5,32 +5,39 @@ use std::{
 };
 
 use failure::{self, format_err};
+use formatter::{FormatMap, FormatString};
 use serde_derive::{Deserialize, Serialize};
 
 use crate::{
-    formatter::{Format, FormatMap},
     output::{Color, Output},
     widget,
 };
 
 pub struct Widget {
-    cfg: Cfg,
     fmt_map: FormatMap,
-    buf: String,
+    bat_name: PathBuf,
+    format: FormatString,
+    sym_charging: String,
+    sym_unknown: String,
+    sym_discharging: String,
+    mediocre_treshold: f64,
+    bad_treshold: f64,
 }
 
 impl Widget {
-    pub fn new(cfg: Cfg) -> Self {
-        Self {
-            cfg: Cfg {
-                bat_name: PathBuf::from("/sys/class/power_supply")
-                    .join(cfg.bat_name)
-                    .join("uevent"),
-                ..cfg
-            },
+    pub fn new(cfg: Cfg) -> Result<Self, failure::Error> {
+        Ok(Self {
             fmt_map: FormatMap::new(),
-            buf: String::new(),
-        }
+            bat_name: PathBuf::from("/sys/class/power_supply")
+                .join(cfg.bat_name)
+                .join("uevent"),
+            bad_treshold: cfg.bad_treshold,
+            sym_charging: cfg.sym_charging,
+            sym_discharging: cfg.sym_discharging,
+            mediocre_treshold: cfg.mediocre_treshold,
+            format: FormatString::parse_with_allowed_keys(&cfg.format, &["sym", "charge"])?,
+            sym_unknown: cfg.sym_unknown,
+        })
     }
 }
 
@@ -101,41 +108,38 @@ where
 
 impl widget::Widget for Widget {
     fn run(&mut self, sink: &mut dyn Output) -> Result<(), failure::Error> {
-        if let Ok(fh) = File::open(&self.cfg.bat_name).map(BufReader::new) {
+        if let Ok(fh) = File::open(&self.bat_name).map(BufReader::new) {
             let uevent = parse_uevent(fh).unwrap();
 
             let charge = uevent.power_supply_energy_now as f64
                 / uevent.power_supply_energy_full as f64
                 * 100.0;
 
-            let color = if charge <= self.cfg.bad_treshold {
+            let color = if charge <= self.bad_treshold {
                 Color::Bad
-            } else if charge <= self.cfg.mediocre_treshold {
+            } else if charge <= self.mediocre_treshold {
                 Color::Mediocre
             } else {
                 Color::Good
             };
 
             let sym = match uevent.power_supply_status {
-                Status::Unknown => &self.cfg.sym_unknown,
-                Status::Charging => &self.cfg.sym_charging,
-                Status::Discharging => &self.cfg.sym_discharging,
+                Status::Unknown => &self.sym_unknown,
+                Status::Charging => &self.sym_charging,
+                Status::Discharging => &self.sym_discharging,
             };
 
             self.fmt_map
                 .update_string_with("sym", |s| s.clone_from(sym));
             self.fmt_map.insert("charge", charge);
-            self.buf.clear();
-            self.cfg.format.fmt(&mut self.buf, &self.fmt_map)?;
 
-            // FIXME:
-            sink.write_colored(color, format_args!("{}", self.buf));
+            sink.write_colored(color, format_args!("{}", self.format.fmt(&self.fmt_map)?));
 
             Ok(())
         } else {
             Err(format_err!(
                 "Can't open battery in {}",
-                self.cfg.bat_name.display()
+                self.bat_name.display()
             ))
         }
     }
@@ -143,9 +147,8 @@ impl widget::Widget for Widget {
 
 #[derive(Serialize, Deserialize, Clone, Debug)]
 pub struct Cfg {
-    pub bat_name: PathBuf,
-    pub format: Format,
-    pub format_no_bat: Format,
+    pub bat_name: String,
+    pub format: String,
     pub sym_charging: String,
     pub sym_unknown: String,
     pub sym_discharging: String,
@@ -156,9 +159,8 @@ pub struct Cfg {
 impl Default for Cfg {
     fn default() -> Self {
         Self {
-            bat_name: PathBuf::from("BAT0"),
-            format: Format::parse("bat: {sym}{charge:2}%").unwrap(),
-            format_no_bat: Format::parse("bat: no").unwrap(),
+            bat_name: "BAT0".to_owned(),
+            format: "bat: {sym}{charge:.2}%".to_owned(),
             sym_charging: "+".to_owned(),
             sym_discharging: "-".to_owned(),
             sym_unknown: "?".to_owned(),

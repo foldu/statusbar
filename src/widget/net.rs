@@ -12,6 +12,7 @@ use std::{
 
 use delegate::*;
 use failure::format_err;
+use formatter::{FormatMap, FormatString};
 use nix::sys::socket::{Ipv4Addr, Ipv6Addr};
 use serde::{
     de::{Deserialize, Deserializer},
@@ -20,30 +21,34 @@ use serde::{
 use serde_derive::{Deserialize, Serialize};
 
 use crate::{
-    formatter::{Format, FormatMap},
     output::{Color, Output},
     widget,
 };
 
 pub struct Widget {
-    cfg: Cfg,
     cache: HashMap<String, IfInfo>,
     sock: unix::InetStreamSock,
     fmt_map: FormatMap,
     default_blacklist: InterfaceBlacklist,
-    buf: String,
+    format_up: FormatString,
+    format_down: FormatString,
+    interface: Interface,
 }
 
 impl Widget {
-    pub fn new(cfg: Cfg) -> Self {
-        Self {
-            cfg,
+    pub fn new(cfg: Cfg) -> Result<Self, failure::Error> {
+        Ok(Self {
+            format_up: FormatString::parse_with_allowed_keys(
+                &cfg.format_up,
+                &["ipv4", "ipv6", "if"],
+            )?,
+            format_down: FormatString::parse_with_allowed_keys(&cfg.format_down, &[""])?,
+            interface: cfg.interface,
             cache: HashMap::new(),
             sock: unix::InetStreamSock::new().expect("Can't create socket"),
             fmt_map: FormatMap::new(),
             default_blacklist: InterfaceBlacklist::new(),
-            buf: String::new(),
-        }
+        })
     }
 }
 
@@ -61,7 +66,7 @@ fn best_running_if<'a>(cache: &'a HashMap<String, IfInfo>) -> Option<(&'a String
 
 impl widget::Widget for Widget {
     fn run(&mut self, sink: &mut dyn Output) -> Result<(), failure::Error> {
-        let blacklist = match self.cfg.interface {
+        let blacklist = match self.interface {
             Interface::Dynamic { ref blacklist } => blacklist,
             Interface::Device { .. } => &self.default_blacklist,
         };
@@ -69,7 +74,7 @@ impl widget::Widget for Widget {
         unix::update_ifs(&mut self.cache, &blacklist, self.sock);
 
         // FIXME: dude what
-        let (color, is_up) = if let Some((if_, if_info)) = match self.cfg.interface {
+        let (color, is_up) = if let Some((if_, if_info)) = match self.interface {
             Interface::Dynamic { .. } => best_running_if(&self.cache),
             Interface::Device { ref name } => Some((
                 name,
@@ -107,14 +112,13 @@ impl widget::Widget for Widget {
             (Color::Bad, false)
         };
 
-        self.buf.clear();
-        if is_up {
-            self.cfg.format_up.fmt(&mut self.buf, &self.fmt_map)?;
+        let format = if is_up {
+            &self.format_up
         } else {
-            self.cfg.format_down.fmt_no_lookup(&mut self.buf);
-        }
+            &self.format_down
+        };
 
-        sink.write_colored(color, format_args!("{}", self.buf));
+        sink.write_colored(color, format_args!("{}", format.fmt(&self.fmt_map)?));
 
         Ok(())
     }
@@ -163,8 +167,8 @@ pub enum Interface {
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct Cfg {
-    format_up: Format,
-    format_down: Format,
+    format_up: String,
+    format_down: String,
     interface: Interface,
 }
 
@@ -174,8 +178,8 @@ impl Default for Cfg {
             interface: Interface::Dynamic {
                 blacklist: InterfaceBlacklist::new(),
             },
-            format_up: Format::parse("{if}: {ipv4}").unwrap(),
-            format_down: Format::parse("net: no").unwrap(),
+            format_up: "{if}: {ipv4}".to_owned(),
+            format_down: "net: no".to_owned(),
         }
     }
 }

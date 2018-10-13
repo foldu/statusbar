@@ -1,7 +1,6 @@
 pub mod battery;
 pub mod datetime;
 pub mod memory;
-#[allow(dead_code)]
 pub mod mpd;
 pub mod net;
 pub mod temp;
@@ -30,16 +29,15 @@ pub enum WidgetKind {
     Temp(temp::Cfg),
 }
 
-pub fn widget_from_kind(kind: WidgetKind) -> Box<dyn Widget> {
+pub fn widget_from_kind(kind: WidgetKind) -> Result<Box<dyn Widget>, failure::Error> {
     use self::WidgetKind::*;
-    match kind {
-        Battery(cfg) => Box::new(battery::Widget::new(cfg)),
+    Ok(match kind {
+        Battery(cfg) => Box::new(battery::Widget::new(cfg)?),
         Datetime(cfg) => Box::new(datetime::Widget::new(cfg)),
         Mpd(cfg) => Box::new(mpd::Widget::new(cfg)),
-        Volume(cfg) => Box::new(volume::Widget::new(cfg)),
-        Net(cfg) => Box::new(net::Widget::new(cfg)),
-        Memory(cfg) => Box::new(memory::Widget::new(cfg)),
-        // FIXME:
-        Temp(cfg) => Box::new(temp::Widget::new(cfg).expect("FIXME")),
-    }
+        Volume(cfg) => Box::new(volume::Widget::new(cfg)?),
+        Net(cfg) => Box::new(net::Widget::new(cfg)?),
+        Memory(cfg) => Box::new(memory::Widget::new(cfg)?),
+        Temp(cfg) => Box::new(temp::Widget::new(cfg)?),
+    })
 }

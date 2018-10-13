@@ -1,0 +1,13 @@
+[package]
+name = "formatter"
+version = "0.1.0"
+authors = ["foldu <foldu@protonmail.com>"]
+edition = "2018"
+license = "MIT"
+
+[dependencies]
+pest = "2.0.1"
+pest_derive = "2.0.1"
+noisy_float = "0.1.8"
+ryu = "0.2.6"
+num-traits = "0.2.6"
