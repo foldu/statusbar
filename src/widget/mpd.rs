@@ -126,8 +126,7 @@ impl widget::Widget for Widget {
                     use std::io;
                     match io_e.kind() {
                         // don't do anything if mpd just failed to respond in time
-                        // note: socket read returns EAGAIN on read timeout instead of ETIMEOUT
-                        io::ErrorKind::Interrupted => {}
+                        io::ErrorKind::TimedOut => {}
                         // otherwise report the error
                         _ => {
                             self.conn = None;
