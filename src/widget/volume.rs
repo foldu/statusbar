@@ -98,9 +98,11 @@ pub struct Widget {
 
 impl Widget {
     pub fn new(cfg: Cfg) -> Result<Self, failure::Error> {
-        let conn = AlsaConn::connect(&cfg.mixer, &cfg.device, cfg.mixer_index).ok();
+        // FIXME: what am I even doing anymore
+        let conn = AlsaConn::connect(&cfg.mixer, &cfg.device, cfg.mixer_index)?;
+
         Ok(Self {
-            conn,
+            conn: Some(conn),
             fmt_map: FormatMap::new(),
             mixer: cfg.mixer,
             device: cfg.device,

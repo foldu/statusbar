@@ -15,7 +15,7 @@ use crate::{
 
 pub struct Widget {
     fmt_map: FormatMap,
-    bat_name: PathBuf,
+    bat_path: PathBuf,
     format: FormatString,
     sym_charging: String,
     sym_unknown: String,
@@ -26,11 +26,17 @@ pub struct Widget {
 
 impl Widget {
     pub fn new(cfg: Cfg) -> Result<Self, failure::Error> {
+        let bat_path = PathBuf::from("/sys/class/power_supply")
+            .join(&cfg.bat_name)
+            .join("uevent");
+
+        if !bat_path.exists() {
+            return Err(format_err!("Battery named {} doesn't exist", cfg.bat_name));
+        }
+
         Ok(Self {
             fmt_map: FormatMap::new(),
-            bat_name: PathBuf::from("/sys/class/power_supply")
-                .join(cfg.bat_name)
-                .join("uevent"),
+            bat_path,
             bad_treshold: cfg.bad_treshold,
             sym_charging: cfg.sym_charging,
             sym_discharging: cfg.sym_discharging,
@@ -108,7 +114,7 @@ where
 
 impl widget::Widget for Widget {
     fn run(&mut self, sink: &mut dyn Output) -> Result<(), failure::Error> {
-        if let Ok(fh) = File::open(&self.bat_name).map(BufReader::new) {
+        if let Ok(fh) = File::open(&self.bat_path).map(BufReader::new) {
             let uevent = parse_uevent(fh).unwrap();
 
             let charge = uevent.power_supply_energy_now as f64
@@ -139,7 +145,7 @@ impl widget::Widget for Widget {
         } else {
             Err(format_err!(
                 "Can't open battery in {}",
-                self.bat_name.display()
+                self.bat_path.display()
             ))
         }
     }
