@@ -78,7 +78,7 @@ impl Sensor {
     pub fn first_cpu() -> Result<Self, failure::Error> {
         let probably_cpu = [
             const_cstr!("k10temp").as_cstr(),
-            const_cstr!("coretemp-isa-0000").as_cstr(),
+            const_cstr!("coretemp").as_cstr(),
         ];
         Self::find(&probably_cpu).map_err(|e| e.context("Can't find cpu").into())
     }
