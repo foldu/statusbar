@@ -1,4 +1,5 @@
 pub mod battery;
+pub mod cpu_usage;
 pub mod datetime;
 pub mod memory;
 pub mod mpd;
@@ -27,6 +28,7 @@ pub enum WidgetKind {
     Net(net::Cfg),
     Memory(memory::Cfg),
     Temp(temp::Cfg),
+    CpuUsage(cpu_usage::Cfg),
 }
 
 pub fn widget_from_kind(kind: WidgetKind) -> Result<Box<dyn Widget>, failure::Error> {
@@ -39,5 +41,6 @@ pub fn widget_from_kind(kind: WidgetKind) -> Result<Box<dyn Widget>, failure::Er
         Net(cfg) => Box::new(net::Widget::new(cfg)?),
         Memory(cfg) => Box::new(memory::Widget::new(cfg)?),
         Temp(cfg) => Box::new(temp::Widget::new(cfg)?),
+        CpuUsage(cfg) => Box::new(cpu_usage::Widget::new(cfg)?),
     })
 }
