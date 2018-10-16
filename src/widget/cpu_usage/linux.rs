@@ -31,7 +31,7 @@ mod tests {
     use super::*;
 
     #[test]
-    fn get_cpu_usage_does_not_panic() {
-        let _ = get_cpu_usage();
+    fn get_cpu_usage_seems_to_work() {
+        assert!(get_cpu_usage() >= 0.0);
     }
 }
