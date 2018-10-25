@@ -39,7 +39,8 @@ impl super::Widget for Widget {
             "temp",
             match self.unit {
                 Unit::Celsius => temp.0,
-                Unit::Kelvin => Kelvin::from(temp).0,
+                Unit::Kelvin => Kelvin::from(temp).as_f64(),
+                Unit::Fahrenheit => Fahrenheit::from(temp).as_f64(),
             },
         );
 
@@ -63,6 +64,7 @@ pub enum Device {
 pub enum Unit {
     Celsius,
     Kelvin,
+    Fahrenheit,
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
@@ -92,13 +94,38 @@ impl Celsius {
     }
 }
 
-#[derive(Debug, Copy, Clone)]
-pub struct Kelvin(f64);
+macro_rules! make_temperature_unit {
+    ($name:ident, $to_celsius:expr) => {
+        #[derive(Debug, Copy, Clone)]
+        pub struct $name(f64);
+
+        impl $name {
+            #[allow(dead_code)]
+            pub fn new(n: f64) -> Self {
+                Self { 0: n }
+            }
+
+            pub fn as_f64(&self) -> f64 {
+                self.0
+            }
+        }
+
+        impl From<Celsius> for $name {
+            fn from(celsius: Celsius) -> Self {
+                Self {
+                    0: $to_celsius(celsius.0),
+                }
+            }
+        }
+    };
+}
 
 const KELVIN_WATER_MELTING_POINT: f64 = 273.15;
 
-impl From<Celsius> for Kelvin {
-    fn from(celsius: Celsius) -> Kelvin {
-        Kelvin(celsius.0 + KELVIN_WATER_MELTING_POINT)
-    }
-}
+make_temperature_unit!(Kelvin, |n| n + KELVIN_WATER_MELTING_POINT);
+
+const ARBITRARY_BULLSHITE_FACTOR: f64 = 5. / 9.;
+const ARBITRARY_BULLSHITE_SUMMAND: f64 = 32.;
+
+make_temperature_unit!(Fahrenheit, |n| n * ARBITRARY_BULLSHITE_FACTOR
+    + ARBITRARY_BULLSHITE_SUMMAND);
