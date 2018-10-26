@@ -1,4 +1,4 @@
-#![feature(try_from, tool_lints)]
+#![feature(try_from)]
 
 mod config;
 mod output;
