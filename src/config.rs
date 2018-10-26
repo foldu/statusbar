@@ -1,6 +1,6 @@
 use std::{fs, io, path::PathBuf};
 
-use directories::BaseDirs;
+use directories::ProjectDirs;
 use failure::{format_err, Fail};
 use lazy_static::*;
 use serde_derive::{Deserialize, Serialize};
@@ -84,10 +84,10 @@ pub struct Config {
 
 lazy_static! {
     pub static ref CONFIG_PATH: PathBuf = {
-        BaseDirs::new()
+        ProjectDirs::from("com", "foldu", "statusbar-rs")
             .unwrap()
             .config_dir()
-            .join("statusbar-rs.toml")
+            .join("config.toml")
     };
 }
 
@@ -116,6 +116,7 @@ impl Config {
 
     pub fn write_default() -> Result<Self, Error> {
         let (cont, ret) = Self::default();
+        fs::create_dir_all(CONFIG_PATH.parent().unwrap())?;
         fs::write(&*CONFIG_PATH, &cont)?;
         Ok(ret)
     }

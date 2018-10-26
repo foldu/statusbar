@@ -10,11 +10,9 @@ ioctl_read_bad!(siocgiwname, SIOCGIWNAME, iwreq);
 pub fn is_wireless_if(sock: InetStreamSock, if_: &str) -> bool {
     let mut req: iwreq = unsafe { mem::zeroed() };
 
-    assert!(
-        u32::try_from(if_.len())
-            .map(|len| len < IFNAMSIZ)
-            .unwrap_or(false)
-    );
+    assert!(u32::try_from(if_.len())
+        .map(|len| len < IFNAMSIZ)
+        .unwrap_or(false));
 
     // safe because of assertion
     unsafe {
