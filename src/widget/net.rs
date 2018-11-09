@@ -87,17 +87,17 @@ impl widget::Widget for Widget {
             self.fmt_map.update_string_with("ipv4", |s| {
                 s.clear();
                 if let Some(ipv4) = if_info.ipv4 {
-                    write!(s, "{}", ipv4);
+                    write!(s, "{}", ipv4).unwrap();
                 } else {
-                    write!(s, "None");
+                    write!(s, "None").unwrap();
                 }
             });
             self.fmt_map.update_string_with("ipv6", |s| {
                 s.clear();
                 if let Some(ipv6) = if_info.ipv6 {
-                    write!(s, "{}", ipv6);
+                    write!(s, "{}", ipv6).unwrap();
                 } else {
-                    write!(s, "None");
+                    write!(s, "None").unwrap();
                 }
             });
 
