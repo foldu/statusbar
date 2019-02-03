@@ -6,4 +6,4 @@ edition = "2018"
 license = "GPL-2.0 WITH Linux-syscall-note"
 
 [build-dependencies]
-bindgen = "0.42.1"
+bindgen = "0.47.1"
