@@ -1,4 +1,5 @@
 # statusbar-rs
+[![Build Status](https://dev.azure.com/jtw0/jtw/_apis/build/status/foldu.statusbar?branchName=master)](https://dev.azure.com/jtw0/jtw/_build/latest?definitionId=1&branchName=master)
 It's a textual statusbar.
 
 ## Features
@@ -9,11 +10,10 @@ It's a textual statusbar.
 - Readable code
 
 ## Depends
-- The thing that gets linked with -lasound, probably libalsa or alsalib
-- dbus? No idea where that comes from
+- ubuntu: libdbus-1-dev dbus libasound2-dev libsensors4-dev -yq
 
 ## Install
 ```
-git clone https://git.mett.navy/foldu/statusbar-rs.git
-cargo install --path statusbar-rs
+git clone https://github.com/foldu/statusbar
+cargo install --path statusbar
 ```
