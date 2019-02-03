@@ -157,11 +157,3 @@ impl Sensor {
             .ok_or_else(|| format_err!("Error while reading sensors"))
     }
 }
-
-#[test]
-fn testes() {
-    let sens = Sensor::first_cpu().unwrap();
-    println!("{:?}", Sensor::with_prefix("amdgpu"));
-
-    println!("{:?}", sens.get_temp());
-}
