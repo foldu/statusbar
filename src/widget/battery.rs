@@ -69,45 +69,8 @@ impl ::std::str::FromStr for Status {
 #[derive(Debug, Clone, Copy)]
 struct UeventBat {
     power_supply_status: Status,
-    power_supply_full: u64,
-    power_supply_now: u64,
+    charge_percent: f64,
 }
-
-macro_rules! mk_power_supply_parser {
-    ($fn:ident, $id:ident) => {
-        fn $fn(r: &mut impl io::BufRead, buf: &mut String, uevent: &mut UeventBat) -> Option<()> {
-            let mut field = 0_u8;
-            while r.read_line(buf).ok()? != 0 {
-                if buf.ends_with('\n') {
-                    buf.pop();
-                }
-
-                let (key, val) = split_uevent(&buf)?;
-
-                if key == concat!("POWER_SUPPLY_", stringify!($id), "_NOW") {
-                    uevent.power_supply_now = val.parse().ok()?;
-                    field |= 1;
-                } else if key == concat!("POWER_SUPPLY_", stringify!($id), "_FULL") {
-                    uevent.power_supply_full = val.parse().ok()?;
-                    field |= 2;
-                } else if key == concat!("POWER_SUPPLY_", stringify!($id), "_NOW") {
-                    uevent.power_supply_status = val.parse().ok()?;
-                    field |= 4;
-                }
-
-                buf.clear();
-            }
-            if field == 1 | 2 | 4 {
-                Some(())
-            } else {
-                None
-            }
-        }
-    };
-}
-
-mk_power_supply_parser!(parse_with_energy, ENERGY);
-mk_power_supply_parser!(parse_with_charge, CHARGE);
 
 #[inline]
 fn split_uevent(ev: &str) -> Option<(&str, &str)> {
@@ -117,22 +80,55 @@ fn split_uevent(ev: &str) -> Option<(&str, &str)> {
 
 fn parse_uevent<R>(mut r: R) -> Option<UeventBat>
 where
-    R: io::BufRead + io::Seek,
+    R: io::BufRead,
 {
-    let mut uevent = UeventBat {
-        power_supply_full: 1,
-        power_supply_now: 1,
-        power_supply_status: Status::Unknown,
-    };
+    let mut status = Status::Unknown;
     let mut buf = String::new();
 
-    if let Some(_) = parse_with_energy(&mut r, &mut buf, &mut uevent) {
-        return Some(uevent);
+    let mut energy: (Option<u64>, Option<u64>) = (None, None);
+    let mut charge = (None, None);
+    let mut capacity = None;
+
+    while r.read_line(&mut buf).ok()? != 0 {
+        if buf.ends_with('\n') {
+            buf.pop();
+        }
+
+        let (key, val) = split_uevent(&buf)?;
+
+        // duplicated *ENERGY* and *CHARGE* are a fix against buggy linux drivers that swap ENERGY and CHARGE
+        // when they feel like it even when CHARGE is something completely different than ENERGY
+        if key == "POWER_SUPPLY_ENERGY_NOW" {
+            energy.0 = val.parse().ok();
+        } else if key == "POWER_SUPPLY_ENERGY_FULL" {
+            energy.1 = val.parse().ok();
+        } else if key == "POWER_SUPPLY_CHARGE_NOW" {
+            charge.0 = val.parse().ok();
+        } else if key == "POWER_SUPPLY_CHARGE_FULL" {
+            charge.1 = val.parse().ok();
+        } else if key == "POWER_SUPPLY_STATUS" {
+            status = val.parse().ok()?;
+        } else if key == "POWER_SUPPLY_CHARGE_CAPACITY" {
+            capacity = val.parse().ok();
+        }
+
+        buf.clear();
     }
 
-    r.seek(io::SeekFrom::Start(0)).ok()?;
-
-    parse_with_charge(&mut r, &mut buf, &mut uevent).map(|_| uevent)
+    match (capacity, energy, charge) {
+        // ENERGY has highest priority, when we didn't get energy fall back to CHARGE
+        (_, (Some(now), Some(full)), _) | (_, _, (Some(now), Some(full))) => Some(UeventBat {
+            power_supply_status: status,
+            charge_percent: now as f64 / full as f64 * 100.0,
+        }),
+        // otherwise fall back to capacity
+        (Some(capacity), _, _) => Some(UeventBat {
+            power_supply_status: status,
+            charge_percent: capacity,
+        }),
+        // just give up
+        _ => None,
+    }
 }
 
 impl widget::Widget for Widget {
@@ -140,7 +136,7 @@ impl widget::Widget for Widget {
         if let Ok(fh) = File::open(&self.bat_path).map(BufReader::new) {
             let uevent = parse_uevent(fh).unwrap();
 
-            let charge = uevent.power_supply_now as f64 / uevent.power_supply_full as f64 * 100.0;
+            let charge = uevent.charge_percent;
 
             let color = if charge <= self.bad_treshold {
                 Color::Bad
