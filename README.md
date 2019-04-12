@@ -1,5 +1,5 @@
-# statusbar-rs
-[![Build Status](https://dev.azure.com/jtw0/jtw/_apis/build/status/foldu.statusbar?branchName=master)](https://dev.azure.com/jtw0/jtw/_build/latest?definitionId=1&branchName=master)
+# statusbar-rs [![Build Status](https://dev.azure.com/jtw0/jtw/_apis/build/status/foldu.statusbar?branchName=master)](https://dev.azure.com/jtw0/jtw/_build/latest?definitionId=1&branchName=master)
+
 It's a textual statusbar.
 
 ## Features
