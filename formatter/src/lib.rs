@@ -182,7 +182,7 @@ pub trait Formatable {
     fn format_with(&self, opt: &FormatOptions, writer: &mut fmt::Formatter) -> fmt::Result;
 }
 
-impl Formatable for fmt::Display {
+impl Formatable for dyn fmt::Display {
     fn format_with(&self, _opt: &FormatOptions, fmt: &mut fmt::Formatter) -> fmt::Result {
         self.fmt(fmt)
     }

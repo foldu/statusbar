@@ -1,6 +1,3 @@
-#[global_allocator]
-static ALLOC: jemallocator::Jemalloc = jemallocator::Jemalloc;
-
 mod config;
 mod output;
 mod parse;

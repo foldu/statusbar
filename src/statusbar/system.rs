@@ -113,7 +113,7 @@ impl Actor for ConfigWatcher {
     type Context = SyncContext<Self>;
     fn started(&mut self, _ctx: &mut Self::Context) {
         use crate::config;
-        use inotify::{self, Inotify, WatchMask};
+        use inotify::{Inotify, WatchMask};
         use std::thread;
 
         let mut inotify = Inotify::init().unwrap();

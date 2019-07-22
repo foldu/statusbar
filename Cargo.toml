@@ -29,8 +29,3 @@ linux_wireless = { path = "linux_wireless" }
 linux_sensors = { path = "linux_sensors" }
 formatter = { path = "formatter" }
 const-cstr = "0.3.0"
-jemallocator = "0.1.9"
-
-[profile.release]
-lto = "fat"
-codegen-units = 1

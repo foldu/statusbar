@@ -77,7 +77,7 @@ struct MemoryInfo {
 }
 
 impl super::Widget for Widget {
-    fn run(&mut self, sink: &mut Output) -> Result<(), failure::Error> {
+    fn run(&mut self, sink: &mut dyn Output) -> Result<(), failure::Error> {
         let mem_info = get_memory_info();
 
         self.fmt_map.insert("used", mem_info.used as f64);
